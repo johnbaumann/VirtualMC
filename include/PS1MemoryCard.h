@@ -2,6 +2,9 @@
 #define PS1MEMORYCARD_H
 
 #include <Arduino.h>
+#include <avr/pgmspace.h> // Allows reading memory from program storage space.
+
+#include "MC1Data.h"
 
 // Implement actual bit manipulation later
 // Need more info on FLAG bits.
