@@ -63,7 +63,6 @@ bool inline SPI_Data_Ready()
 
 void loop()
 {
-  bool cmdRouted = false;
   byte DataIn = 0x00;
   byte DataOut = 0xFF;
 
@@ -78,40 +77,33 @@ void loop()
 
     if (digitalReadFast(SS) == HIGH)
     {
-      CurrentSPICommand = PS1_SPICommands::Idle;
-      // Reset Memory Card()
+      
+      CurrentSPICommand = PS1_SPICommands::Idle;  // Clear last command
+      MemCard1.GoIdle();  // Reset Memory Card State
     }
     else if (SPI_Data_Ready())
     {
       DataIn = SPDR;
-      cmdRouted = false;
 
-      while (!cmdRouted)
+      if (CurrentSPICommand == PS1_SPICommands::Idle)
+        CurrentSPICommand = DataIn;
+
+      switch (CurrentSPICommand)
       {
-        switch (CurrentSPICommand)
-        {
-        case PS1_SPICommands::Idle:
-          CurrentSPICommand = DataIn;
-          break;
+      case PS1_SPICommands::MC_Access:
+        DataOut = MemCard1.Process(DataIn);
+        //if(MemCard1.SendAck())
+          SEND_ACK();
+        break;
 
-        case PS1_SPICommands::MC_Access:
-          SPDR = MemCard1.Process(DataIn);
-          cmdRouted = true;
-          break;
-
-        case PS1_SPICommands::PAD_Access:
-          SPDR = 0xFF; // Ignore
-          CurrentSPICommand = PS1_SPICommands::Idle;
-          cmdRouted = true;
-          continue;
-          break;
-
-        default:       // Bad/Unexpected/Unsupported slave select command
-          SPDR = 0xFF; // Ignore
-          CurrentSPICommand = PS1_SPICommands::Idle;
-          cmdRouted = true;
-        }
+      // Ignore pad, cascade to default ignore behavior
+      case PS1_SPICommands::PAD_Access:
+      default:          // Bad/Unexpected/Unsupported slave select command
+        DataOut = 0xFF; // Ignore
+        CurrentSPICommand = PS1_SPICommands::Idle;
       }
+
+      SPDR = DataOut;
     }
   }
 }

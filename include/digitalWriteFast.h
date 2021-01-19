@@ -1,4 +1,4 @@
-// 1/17/2021 Added 27-29 to supress compiler warnings on macro redefine
+// 1/17/2021 Added an undefine to supress compiler warnings on macro redefinition of digitalPinToTimer
 
 #if !defined(digitalPinToPortReg)
 #if !(defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__) || defined(__AVR_ATmega2561__))

@@ -44,17 +44,20 @@ private:
     uint16_t MC_Sector;
     byte Sector_Offset;
 
-    bool bSendAck;
-    bool bDeviceActive;
+    byte Checksum_Out;
+    byte Checksum_In;
 
-    byte ReadCmnd_Tick(byte&);
+    bool bSendAck;
+
+    byte ReadCmnd_Tick(byte&);//52h
+    byte WriteCmnd_Tick(byte&);//57h
+    byte GetIDCmnd_Tick(byte&);//53h
 
 public:
     PS1MemoryCard();
-    void SlaveSelectLow();
+    void GoIdle();
     byte Process(byte);
     bool SendAck();
-    bool IsActiveDevice();
 };
 
 #endif
