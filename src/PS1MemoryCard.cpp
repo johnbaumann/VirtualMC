@@ -12,8 +12,21 @@ void PS1MemoryCard::GoIdle()
     this->Cur_Cmnd = MC_Commands::None;
     this->MC_Sector = 0x0000;
     this->Cmnd_Ticks = 0;
-    this->bSendAck = false;
+    this->bSendAck = true;
     this->Sector_Offset = 0;
+}
+
+bool PS1MemoryCard::SendAck()
+{
+    if(this->bSendAck)
+    {
+        this->bSendAck = false;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 byte PS1MemoryCard::Process(byte DataIn)
@@ -140,6 +153,7 @@ byte PS1MemoryCard::ReadCmnd_Tick(byte &DataIn)
         else if (this->Cmnd_Ticks == 137)
         {
             DataOut = MC_Responses::GoodRW;
+            this->bSendAck = false;
         }
         else
         {
@@ -218,6 +232,7 @@ byte PS1MemoryCard::WriteCmnd_Tick(byte &DataIn)
         {
             if (this->Checksum_In == this->Checksum_Out)
             {
+                this->FLAG = MC_Flags::Directory_Read; 
                 DataOut = MC_Responses::GoodRW;
             }
             else
@@ -244,9 +259,4 @@ byte PS1MemoryCard::GetIDCmnd_Tick(byte &DataIn)
 {
 
     return MC_Responses::Idle_High;
-}
-
-bool PS1MemoryCard::SendAck()
-{
-    return this->bSendAck;
 }

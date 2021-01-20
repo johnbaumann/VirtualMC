@@ -21,6 +21,7 @@ byte CurrentSPICommand = PS1_SPICommands::Idle;
 
 void inline SEND_ACK()
 {
+  delayMicroseconds(7);
   digitalWriteFast(ACK, LOW);
   delayMicroseconds(4);
   digitalWriteFast(ACK, HIGH);
@@ -68,6 +69,7 @@ void loop()
 
   while (1)
   {
+    bool bTempAck = false;
 
     //if SS high, reset status
     //else, poll for spi data
@@ -77,9 +79,8 @@ void loop()
 
     if (digitalReadFast(SS) == HIGH)
     {
-      
-      CurrentSPICommand = PS1_SPICommands::Idle;  // Clear last command
-      MemCard1.GoIdle();  // Reset Memory Card State
+      CurrentSPICommand = PS1_SPICommands::Idle; // Clear last command
+      MemCard1.GoIdle();                         // Reset Memory Card State
     }
     else if (SPI_Data_Ready())
     {
@@ -91,9 +92,11 @@ void loop()
       switch (CurrentSPICommand)
       {
       case PS1_SPICommands::MC_Access:
-        DataOut = MemCard1.Process(DataIn);
-        //if(MemCard1.SendAck())
-          SEND_ACK();
+      bTempAck = MemCard1.SendAck();
+      DataOut = MemCard1.Process(DataIn);
+      if (bTempAck)
+        SEND_ACK();
+
         break;
 
       // Ignore pad, cascade to default ignore behavior
