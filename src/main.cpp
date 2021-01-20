@@ -52,7 +52,8 @@ void setup(void)
 
   clr = clr; // Supress clr not used warning. We're using it to clear flag registers above.
 
-  SPDR = 0xFF; // Keep Slave out high, PS1 slave detect?
+  SPDR = 0xFF;    // Keep Slave out high, PS1 slave detect?
+  noInterrupts(); //Not using interrupts, evidently they throw off timing.
 }
 
 bool inline SPI_Data_Ready()
@@ -92,10 +93,10 @@ void loop()
       switch (CurrentSPICommand)
       {
       case PS1_SPICommands::MC_Access:
-      bTempAck = MemCard1.SendAck();
-      DataOut = MemCard1.Process(DataIn);
-      if (bTempAck)
-        SEND_ACK();
+        bTempAck = MemCard1.SendAck();
+        DataOut = MemCard1.Process(DataIn);
+        if (bTempAck)
+          SEND_ACK();
 
         break;
 
