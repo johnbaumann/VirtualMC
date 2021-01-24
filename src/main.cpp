@@ -4,30 +4,44 @@
 #include "digitalWriteFast.h" //https://code.google.com/archive/p/digitalwritefast/
 #include "PS1MemoryCard.h"
 
-static const uint8_t ACK = 2;
-
 void loop();
-void inline SEND_ACK();
 void setup(void);
+
+byte SerialOut[16];
 
 enum PS1_SPICommands : byte
 {
   Idle = 0x00,
   PAD_Access = 0x01,
-  MC_Access = 0x81
+  MC_Access = 0x81,
+  Ignore = 0xFF
 };
 
 byte CurrentSPICommand = PS1_SPICommands::Idle;
 
+PS1MemoryCard MemCard1;
+
 void inline SEND_ACK()
 {
-  delayMicroseconds(7);
+  //delayMicroseconds(7);
   digitalWriteFast(ACK, LOW);
   delayMicroseconds(4);
   digitalWriteFast(ACK, HIGH);
 }
 
-PS1MemoryCard MemCard1;
+void inline DISABLE_SPI()
+{
+  SPCR &= ~_BV(SPE); //Disable SPI
+  pinModeFast(MISO, OUTPUT);
+  pinModeFast(ACK, OUTPUT);
+}
+
+void inline ENABLE_SPI()
+{
+  SPCR |= _BV(SPE); //Enable SPI
+  pinModeFast(MISO, OUTPUT);
+  pinModeFast(ACK, OUTPUT);
+}
 
 void setup(void)
 {
@@ -43,6 +57,9 @@ void setup(void)
   // ACK high on idle
   digitalWriteFast(ACK, HIGH);
 
+  //Serial.begin(115200);
+  //Serial.println("Hello Computer");
+
   // Set bits in the SPCR register
   SPCR = 0x6F;
 
@@ -52,8 +69,7 @@ void setup(void)
 
   clr = clr; // Supress clr not used warning. We're using it to clear flag registers above.
 
-  SPDR = 0xFF;    // Keep Slave out high, PS1 slave detect?
-  noInterrupts(); //Not using interrupts, evidently they throw off timing.
+  SPDR = 0xFF; // Keep Slave out high, PS1 slave detect?
 }
 
 bool inline SPI_Data_Ready()
@@ -67,10 +83,10 @@ void loop()
 {
   byte DataIn = 0x00;
   byte DataOut = 0xFF;
+  bool bTempAck = false;
 
   while (1)
   {
-    bool bTempAck = false;
 
     //if SS high, reset status
     //else, poll for spi data
@@ -80,34 +96,50 @@ void loop()
 
     if (digitalReadFast(SS) == HIGH)
     {
-      CurrentSPICommand = PS1_SPICommands::Idle; // Clear last command
-      MemCard1.GoIdle();                         // Reset Memory Card State
-    }
-    else if (SPI_Data_Ready())
-    {
-      DataIn = SPDR;
-
-      if (CurrentSPICommand == PS1_SPICommands::Idle)
-        CurrentSPICommand = DataIn;
-
-      switch (CurrentSPICommand)
+      //Serial.println("Idle");
+      if (CurrentSPICommand != PS1_SPICommands::Idle)
       {
-      case PS1_SPICommands::MC_Access:
-        bTempAck = MemCard1.SendAck();
-        DataOut = MemCard1.Process(DataIn);
-        if (bTempAck)
-          SEND_ACK();
-
-        break;
-
-      // Ignore pad, cascade to default ignore behavior
-      case PS1_SPICommands::PAD_Access:
-      default:          // Bad/Unexpected/Unsupported slave select command
-        DataOut = 0xFF; // Ignore
-        CurrentSPICommand = PS1_SPICommands::Idle;
+        CurrentSPICommand = PS1_SPICommands::Idle; // Clear last command
+        MemCard1.GoIdle();                         // Reset Memory Card State
+        ENABLE_SPI();
       }
+    }
+    else
+    {
+      if (CurrentSPICommand != PS1_SPICommands::Ignore)
+      {
 
-      SPDR = DataOut;
+        if (SPI_Data_Ready())
+        {
+          noInterrupts();
+
+          DataIn = SPDR;
+          bTempAck = MemCard1.SendAck();
+
+          if (CurrentSPICommand == PS1_SPICommands::Idle)
+            CurrentSPICommand = DataIn;
+
+          switch (CurrentSPICommand)
+          {
+
+          case PS1_SPICommands::MC_Access:
+            DataOut = MemCard1.Process(DataIn);
+            break;
+
+          // Ignore pad, cascade to default ignore behavior
+          case PS1_SPICommands::PAD_Access:
+          default:          // Bad/Unexpected/Unsupported slave select command
+            DataOut = 0xFF; // Ignore
+            CurrentSPICommand = PS1_SPICommands::Ignore;
+            DISABLE_SPI();
+          }
+
+          SPDR = DataOut;
+          if (bTempAck)
+            SEND_ACK();
+          interrupts();
+        }
+      }
     }
   }
 }

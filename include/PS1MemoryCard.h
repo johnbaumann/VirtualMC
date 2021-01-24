@@ -4,7 +4,12 @@
 #include <Arduino.h>
 #include <avr/pgmspace.h> // Allows reading memory from program storage space.
 
+#include "digitalWriteFast.h"
 #include "MC1Data.h"
+
+static const uint8_t ACK = 2;
+
+void inline SEND_ACK();
 
 // Implement actual bit manipulation later
 // Need more info on FLAG bits.
@@ -52,8 +57,8 @@ private:
 
     bool bSendAck;
 
-    byte ReadCmnd_Tick(byte &);  //52h
-    byte WriteCmnd_Tick(byte &); //57h
+    byte inline ReadCmnd_Tick(byte &);  //52h
+    byte inline WriteCmnd_Tick(byte &); //57h
     byte GetIDCmnd_Tick(byte &); //53h
 
 public:
@@ -61,6 +66,8 @@ public:
     void GoIdle();
     byte Process(byte);
     bool SendAck();
+    //void MemCardStart
+    //void MemCardStop
 };
 
 #endif

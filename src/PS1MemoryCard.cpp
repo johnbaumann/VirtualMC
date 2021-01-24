@@ -1,5 +1,6 @@
 #include "PS1MemoryCard.h"
 
+
 PS1MemoryCard::PS1MemoryCard()
 {
     this->FLAG = MC_Flags::Directory_Unread;
@@ -18,7 +19,7 @@ void PS1MemoryCard::GoIdle()
 
 bool PS1MemoryCard::SendAck()
 {
-    if(this->bSendAck)
+    if (this->bSendAck)
     {
         this->bSendAck = false;
         return true;
@@ -32,6 +33,8 @@ bool PS1MemoryCard::SendAck()
 byte PS1MemoryCard::Process(byte DataIn)
 {
     bool cmdRouted = false;
+    //bool bTempAck = this->bSendAck;
+
     byte DataOut;
 
     while (!cmdRouted)
@@ -83,7 +86,7 @@ byte PS1MemoryCard::Process(byte DataIn)
     return DataOut;
 }
 
-byte PS1MemoryCard::ReadCmnd_Tick(byte &DataIn)
+byte inline PS1MemoryCard::ReadCmnd_Tick(byte &DataIn)
 {
 
     byte DataOut;
@@ -139,21 +142,23 @@ byte PS1MemoryCard::ReadCmnd_Tick(byte &DataIn)
         this->Checksum_Out = (MC_Sector >> 8) ^ (MC_Sector & 0xFF);
         break;
 
+        // Cases 8 through 135 overloaded to default operator
+
+    case 136:
+        DataOut = Checksum_Out;
+        break;
+
+    case 137:
+        DataOut = MC_Responses::GoodRW;
+        this->bSendAck = false;
+        break;
+
     default:
         if (this->Cmnd_Ticks >= 8 && this->Cmnd_Ticks <= 135) //Stay here for 128 bytes
         {
             DataOut = pgm_read_byte_near((FakeData + (MC_Sector * (uint16_t)128) + this->Sector_Offset));
             this->Checksum_Out ^= DataOut;
             Sector_Offset++;
-        }
-        else if (this->Cmnd_Ticks == 136)
-        {
-            DataOut = Checksum_Out;
-        }
-        else if (this->Cmnd_Ticks == 137)
-        {
-            DataOut = MC_Responses::GoodRW;
-            this->bSendAck = false;
         }
         else
         {
@@ -168,7 +173,7 @@ byte PS1MemoryCard::ReadCmnd_Tick(byte &DataIn)
     return DataOut;
 }
 
-byte PS1MemoryCard::WriteCmnd_Tick(byte &DataIn)
+byte inline PS1MemoryCard::WriteCmnd_Tick(byte &DataIn)
 {
     byte DataOut;
 
@@ -232,7 +237,7 @@ byte PS1MemoryCard::WriteCmnd_Tick(byte &DataIn)
         {
             if (this->Checksum_In == this->Checksum_Out)
             {
-                this->FLAG = MC_Flags::Directory_Read; 
+                this->FLAG = MC_Flags::Directory_Read;
                 DataOut = MC_Responses::GoodRW;
             }
             else
