@@ -1,15 +1,7 @@
-#ifndef PS1MEMORYCARD_H
-#define PS1MEMORYCARD_H
+#ifndef MAIN_H
+#define MAIN_H
 
 #include <Arduino.h>
-#include <avr/pgmspace.h> // Allows reading memory from program storage space.
-
-#include "digitalWriteFast.h"
-#include "MC1Data.h"
-
-static const uint8_t ACK = 2;
-
-void inline SEND_ACK();
 
 // Implement actual bit manipulation later
 // Need more info on FLAG bits.
@@ -42,32 +34,28 @@ enum MC_Responses : byte
     BadSector = 0xFF    // Bad Memory Card Sector
 };
 
-class PS1MemoryCard
+enum PS1_SPICommands : byte
 {
-private:
-    byte Cur_Cmnd;
-    uint8_t Cmnd_Ticks;
-
-    byte FLAG;
-    uint16_t MC_Sector;
-    byte Sector_Offset;
-
-    byte Checksum_Out;
-    byte Checksum_In;
-
-    bool bSendAck;
-
-    byte inline ReadCmnd_Tick(byte &);  //52h
-    byte inline WriteCmnd_Tick(byte &); //57h
-    byte GetIDCmnd_Tick(byte &); //53h
-
-public:
-    PS1MemoryCard();
-    void GoIdle();
-    byte Process(byte);
-    bool SendAck();
-    //void MemCardStart
-    //void MemCardStop
+    Idle = 0x00,
+    PAD_Access = 0x01,
+    MC_Access = 0x81,
+    Ignore = 0xFF
 };
+
+static const uint8_t ACK = 2;
+
+//Memcarduinoplus
+//Device Firmware identifier
+#define IDENTIFIER "VIRMCD" //MemCARDuinoPlus
+#define VERSION 0x05        //Firmware version byte (Major.Minor)
+
+//Commands
+#define GETID 0xA0   //Get identifier
+#define GETVER 0xA1  //Get firmware version
+#define MCREAD 0xA2  //Memory Card Read (frame)
+#define MCWRITE 0xA3 //Memory Card Write (frame)
+
+//Responses
+#define ERROR 0xE0 //Invalid command received (error)
 
 #endif
