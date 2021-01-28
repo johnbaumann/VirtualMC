@@ -1,14 +1,15 @@
 #include "pccomms.h"
 
-byte SerialIn = 0x00;
-byte SerialOut = 0xFF;
-byte SerialChecksum = 0x00;
+byte Serial_In = 0x00;
+byte Serial_Out = 0xFF;
+byte Serial_Checksum = 0x00;
+uint16_t Serial_IdleTicks = 0;
 
 void ReadFrame(unsigned int Address)
 {
     uint16_t MC_Sector = (Address >> 8) | (Address << 8);
-    byte SerialChecksum = (Address >> 8) ^ (Address & 0xFF);
-    byte SerialOut = 0x00;
+    byte Serial_Checksum = (Address >> 8) ^ (Address & 0xFF);
+    byte Serial_Out = 0x00;
 
     //optiboot_readPage(FlashData, ramBuffer, Address+1);
 
@@ -16,19 +17,19 @@ void ReadFrame(unsigned int Address)
     {
         if (MC_Sector + 1 > NUMBER_OF_PAGES)
         {
-            SerialOut = 0xFF;
+            Serial_Out = 0xFF;
         }
         else
         {
-            SerialOut = pgm_read_byte_near((FlashData + (MC_Sector * (uint16_t)128) + Sector_Offset));
+            Serial_Out = pgm_read_byte_near((FlashData + (MC_Sector * (uint16_t)128) + Sector_Offset));
         }
 
         //SerialOut = ramBuffer[Sector_Offset];
-        SerialChecksum ^= SerialOut;
-        Serial.write(SerialOut);
+        Serial_Checksum ^= Serial_Out;
+        Serial.write(Serial_Out);
     }
 
-    Serial.write(SerialChecksum);       //Checksum (MSB xor LSB xor Data)
+    Serial.write(Serial_Checksum);      //Checksum (MSB xor LSB xor Data)
     Serial.write(MC_Responses::GoodRW); //Memory Card status byte*/
     MC_FLAG = MC_Flags::Directory_Unread;
 }
@@ -37,10 +38,10 @@ void ReadFrame(unsigned int Address)
 void WriteFrame(unsigned int Address)
 {
     uint16_t MC_Sector = (Address >> 8) | (Address << 8);
-    byte SerialChecksum = (Address >> 8) ^ (Address & 0xFF);
+    byte Serial_Checksum = (Address >> 8) ^ (Address & 0xFF);
     byte MC_Checksum_In = 0xFF;
 
-    uint8_t ReadData[SPM_PAGESIZE];
+    uint8_t MC_DataBuffer[SPM_PAGESIZE];
 
     //Copy 128 bytes from the serial input
     for (int i = 0; i < 128; i++)
@@ -48,8 +49,8 @@ void WriteFrame(unsigned int Address)
         while (!Serial.available())
             ;
 
-        ReadData[i] = Serial.read();
-        SerialChecksum ^= ReadData[i];
+        MC_DataBuffer[i] = Serial.read();
+        Serial_Checksum ^= MC_DataBuffer[i];
     }
 
     while (!Serial.available())
@@ -61,11 +62,12 @@ void WriteFrame(unsigned int Address)
     {
         Serial.write(MC_Responses::BadSector);
     }
-    else if (SerialChecksum == MC_Checksum_In)
+    else if (Serial_Checksum == MC_Checksum_In)
     {
         if (MC_Sector + 1 <= NUMBER_OF_PAGES)
         {
-            optiboot_writePage(FlashData, ReadData, MC_Sector + 1);
+            optiboot_writePage(FlashData, MC_DataBuffer, MC_Sector + 1);
+            MC_FLAG = MC_Flags::Directory_Unread;
         }
         Serial.write(MC_Responses::GoodRW); //Memory Card status byte
                                             //Write 128 byte data to the frame
@@ -80,10 +82,12 @@ void ProcessSerialEvents()
 {
     while (Serial.available() > 0)
     {
-        //bPCLinkActive = true;
-        SerialIn = Serial.read();
+        Serial_IdleTicks = 0;
 
-        switch (SerialIn)
+        //bPCLinkActive = true;
+        Serial_In = Serial.read();
+
+        switch (Serial_In)
         {
         default:
             Serial.write(ERROR);
@@ -112,4 +116,7 @@ void ProcessSerialEvents()
             break;
         }
     }
+
+    if(Serial_IdleTicks < 0xFFFF)
+        Serial_IdleTicks++;
 }

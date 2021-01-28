@@ -1,9 +1,10 @@
 #include "memcard.h"
-
+#include "testdata.h"
 
 //Allocate space for memory card data
 //SPM_PAGESIZE = 128 bytes on ATMEGA328P
-const uint8_t FlashData[SPM_PAGESIZE * NUMBER_OF_PAGES] __attribute__ (( aligned(SPM_PAGESIZE) )) PROGMEM = {};
+
+
 byte MC_FLAG = MC_Flags::Directory_Unread;
 
 byte MC_Cur_Cmnd;
@@ -12,14 +13,15 @@ uint16_t MC_Sector;
 byte MC_Sector_Offset;
 byte MC_Checksum_Out;
 byte MC_Checksum_In;
-bool MC_SendAck;
+bool MC_SendAck = true;
+bool MC_BufferFull = false;
 
-
+uint8_t MC_DataBuffer[SPM_PAGESIZE];  //128 on 328P
 
 void MC_GoIdle()
 {
   MC_Cur_Cmnd = MC_Commands::None;
-  MC_Sector = 0x0000;
+  //MC_Sector = 0x0000;
   MC_Cmnd_Ticks = 0;
   MC_SendAck = true;
   MC_Sector_Offset = 0;
@@ -115,6 +117,7 @@ byte MC_WriteCmnd_Tick(byte &DataIn)
 {
   byte DataOut;
 
+
   MC_SendAck = true; // Default true;
 
   switch (MC_Cmnd_Ticks)
@@ -156,7 +159,8 @@ byte MC_WriteCmnd_Tick(byte &DataIn)
   default:
     if (MC_Cmnd_Ticks >= 5 && MC_Cmnd_Ticks <= 132)
     {
-      //To-do: Store data
+      //Store data
+      MC_DataBuffer[MC_Cmnd_Ticks - 5] = DataIn;
       //Calculate checksum
       MC_Checksum_Out ^= DataIn;
       //Reply with (pre)
@@ -173,10 +177,19 @@ byte MC_WriteCmnd_Tick(byte &DataIn)
     }
     else if (MC_Cmnd_Ticks == 135) //00h
     {
-      if (MC_Checksum_In == MC_Checksum_Out)
+      if (MC_Sector < 0 || MC_Sector > 1024)
+      {
+        DataOut = MC_Responses::BadSector;
+      }
+      else if (MC_Checksum_In == MC_Checksum_Out)
       {
         MC_FLAG = MC_Flags::Directory_Read;
         DataOut = MC_Responses::GoodRW;
+        // If the incoming sector is within our storage, store it
+        if (MC_Sector + 1 <= NUMBER_OF_PAGES)
+        {
+            MC_BufferFull = true;
+        }
       }
       else
       {
@@ -196,4 +209,12 @@ byte MC_WriteCmnd_Tick(byte &DataIn)
   MC_Cmnd_Ticks++;
 
   return DataOut;
+}
+
+void MC_CommitWrite()
+{
+  optiboot_writePage(FlashData, MC_DataBuffer, MC_Sector + 1);
+  if(MC_Sector == 0x0000)
+    MC_FLAG = MC_Flags::Directory_Unread;
+  MC_BufferFull = false;
 }

@@ -1,6 +1,5 @@
 #include "main.h"
 
-
 //TODO: Flash optiboot, implement flash page writes
 //      Began adding memcarduino command support
 
@@ -10,7 +9,6 @@
 //SS      10  (PS1: ATT)
 //MOSI    11  (PS1: CMND)
 //MISO    12  (PS1: Data)
-
 
 void setup(void)
 {
@@ -25,8 +23,6 @@ void setup(void)
 
   // ACK high on idle
   digitalWriteFast(ACK, HIGH);
-
-  Serial.begin(38400);
 
   // Set bits in the SPCR register
   SPCR = 0x6F;
@@ -43,7 +39,7 @@ void setup(void)
 
 void inline SEND_ACK()
 {
-  //delayMicroseconds(7); //No delay needed, burning enough cycles
+  delayMicroseconds(3);
   digitalWriteFast(ACK, LOW);
   delayMicroseconds(4);
   digitalWriteFast(ACK, HIGH);
@@ -60,8 +56,6 @@ void inline DISABLE_SPI()
 void inline ENABLE_SPI()
 {
   SPCR |= _BV(SPE); //Enable SPI
-  pinModeFast(MISO, OUTPUT);
-  pinModeFast(ACK, OUTPUT);
 }
 
 bool inline SPI_Data_Ready()
@@ -92,20 +86,35 @@ void loop()
       if (CurrentSIOCommand != PS1_SIOCommands::Idle)
       {
         CurrentSIOCommand = PS1_SIOCommands::Idle; // Clear last command
-        MC_GoIdle();                                  // Reset Memory Card State
+        MC_GoIdle();                               // Reset Memory Card State
         ENABLE_SPI();
+        interrupts();
+        Serial.begin(38400);
       }
       ProcessSerialEvents();
     }
     else
-    {
+    {    
       if (CurrentSIOCommand != PS1_SIOCommands::Ignore)
       {
+        if (CurrentSIOCommand == PS1_SIOCommands::Idle)
+        {
+          // Gives the serial port time to go idle
+          // This also seems to make the bootloader happy for the initial boot
+          if(Serial_IdleTicks < SERIALTIMEOUTTICKS)
+          {
+            ProcessSerialEvents();
+            continue;
+          }
+          Serial.end();
+          noInterrupts();
+          ENABLE_SPI();
+          pinModeFast(MISO, OUTPUT);
+          pinModeFast(ACK, OUTPUT);
+        }
 
         if (SPI_Data_Ready())
         {
-          noInterrupts();
-
           DataIn = SPDR;
           bTempAck = MC_SendAck;
 
@@ -165,7 +174,8 @@ void loop()
           SPDR = DataOut;
           if (bTempAck)
             SEND_ACK();
-          interrupts();
+          if (MC_BufferFull)
+            MC_CommitWrite();
         }
       }
     }

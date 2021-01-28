@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include "sio.h"
+#include "optiboot.h"
 
 // On the 328p, pages are 128 bytes, which matches the frame size of a memory card.
 #define NUMBER_OF_BLOCKS 3
@@ -51,9 +52,13 @@ extern byte MC_Sector_Offset;
 extern byte MC_Checksum_Out;
 extern byte MC_Checksum_In;
 extern bool MC_SendAck;
+extern uint8_t MC_DataBuffer[];
+extern bool MC_BufferFull;
 
 void MC_GoIdle();
 byte MC_ReadCmnd_Tick(byte &);  //PSX 52h
 byte MC_WriteCmnd_Tick(byte &); //PSX 57h
+void MC_CommitWrite();
+
 
 #endif //MC1DATA_H

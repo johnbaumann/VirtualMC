@@ -19,6 +19,10 @@
 //Responses
 #define ERROR 0xE0 //Invalid command received (error)
 
+#define SERIALTIMEOUTTICKS  0xFFFF
+
+extern uint16_t Serial_IdleTicks;
+
 void ProcessSerialEvents();
 void ReadFrame(unsigned int);  //Serial
 void WriteFrame(unsigned int); //Serial
