@@ -56,3 +56,4 @@
   Small(0.1uF etc) capacitor between RST and RTS for auto reset
 
   Reset not explicitly required, useful for reflashing
+  
