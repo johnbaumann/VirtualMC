@@ -7,7 +7,7 @@
 
 //Memcarduinoplus
 //Device Firmware identifier
-#define IDENTIFIER "VIRMCD" //MemCARDuinoPlus
+#define IDENTIFIER "MCDINO" //MemCARDuinoPlus
 #define VERSION 0x05        //Firmware version byte (Major.Minor)
 
 //Commands

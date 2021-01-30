@@ -78,6 +78,8 @@ void WriteFrame(unsigned int Address)
     }
 }
 
+// Directly adapted from Memcarduino by ShendoXT
+// https://github.com/ShendoXT/memcarduino
 void ProcessSerialEvents()
 {
     while (Serial.available() > 0)

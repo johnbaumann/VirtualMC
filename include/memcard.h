@@ -6,6 +6,7 @@
 #include "optiboot.h"
 
 // On the 328p, pages are 128 bytes, which matches the frame size of a memory card.
+// Mega 2560 pages are 256 bytes, needs changes
 #define NUMBER_OF_BLOCKS 3
 // Define the number of pages you want to write to here (limited by flash size)
 #define NUMBER_OF_PAGES NUMBER_OF_BLOCKS*64
@@ -25,7 +26,8 @@ enum MC_Commands : byte
     Read = 0x52,   // Read Command
     Get_ID = 0x53, // Get ID Command
     Write = 0x57,  // Write Command
-    None = 0x00    // No command, idle state
+    None = 0x00,   // No command, idle state
+    Error = 0xFF   // Bad command
 };
 
 enum MC_Responses : byte

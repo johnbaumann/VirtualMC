@@ -10,8 +10,7 @@
 #include "optiboot.h"
 #include "pccomms.h"
 #include "sio.h"
+#include "spi.h"
 
-
-static const uint8_t ACK = 2;
 
 #endif

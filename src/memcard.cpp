@@ -213,8 +213,13 @@ byte MC_WriteCmnd_Tick(byte &DataIn)
 
 void MC_CommitWrite()
 {
+  // Write buffer to memory page
   optiboot_writePage(FlashData, MC_DataBuffer, MC_Sector + 1);
+  
+  // Directory structure was updated, reset directory status
   if(MC_Sector == 0x0000)
     MC_FLAG = MC_Flags::Directory_Unread;
+  
+  // Clear buffer status before return
   MC_BufferFull = false;
 }
