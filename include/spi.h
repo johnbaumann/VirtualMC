@@ -17,5 +17,4 @@ void SEND_ACK();
 
 static const uint8_t ACK = 2;
 
-
 #endif // SPI_H

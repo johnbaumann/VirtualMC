@@ -2,19 +2,28 @@
 #define SIO_H
 
 #include <Arduino.h>
+#include "memcard.h"
+#include "pad.h"
+#include "spi.h"
 
-#define SIOMAXIDLETICKS  0x7FFF
+#define SIOMAXIDLETICKS 0x7FFF
 
 enum PS1_SIOCommands : byte
 {
     Idle = 0x00,
     PAD_Access = 0x01,
     MC_Access = 0x81,
-    Wait = 0xFE,        // Piggy back SIO command/variable
-    Ignore = 0xFF       // To ignore or wait for incoming commands
+    Wait = 0xFE,  // Piggy back SIO command/variable
+    Ignore = 0xFF // To ignore or wait for incoming commands
 };
 
 extern byte CurrentSIOCommand;
 extern uint16_t SIO_TimeoutTicks;
+
+extern bool bMemCardEnabled;
+extern bool bPadEnabled;
+
+void SIO_ProcessEvents();
+byte SIO_ProcessPadEvents(byte);
 
 #endif

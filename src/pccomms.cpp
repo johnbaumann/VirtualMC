@@ -80,7 +80,7 @@ void WriteFrame(unsigned int Address)
 
 // Directly adapted from Memcarduino by ShendoXT
 // https://github.com/ShendoXT/memcarduino
-void ProcessSerialEvents()
+void Serial_ProcessEvents()
 {
     while (Serial.available() > 0)
     {
@@ -116,9 +116,43 @@ void ProcessSerialEvents()
             delay(5);
             WriteFrame(Serial.read() | Serial.read() << 8);
             break;
+
+        case VMCPADON:
+            if (!bPadEnabled)
+            {
+                bPadEnabled = true;
+            }
+            Serial.write(OKAY);
+            break;
+
+        case VMCPADOFF:
+            if (bPadEnabled)
+            {
+                bPadEnabled = false;
+            }
+            Serial.write(OKAY);
+            break;
+
+        case VMCCARDON:
+            if (!bMemCardEnabled)
+            {
+                MC_FLAG = MC_Flags::Directory_Unread;
+                bMemCardEnabled = true;
+            }
+            Serial.write(OKAY);
+            break;
+
+        case VMCCARDOFF:
+            if (bMemCardEnabled)
+            {
+                bMemCardEnabled = false;
+                MC_GoIdle();
+            }
+            Serial.write(OKAY);
+            break;
         }
     }
 
-    if(Serial_IdleTicks < 0xFFFF)
+    if (Serial_IdleTicks < 0xFFFF)
         Serial_IdleTicks++;
 }

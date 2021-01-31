@@ -2,10 +2,13 @@
 
 void SEND_ACK()
 {
-  delayMicroseconds(3);
-  digitalWriteFast(ACK, LOW);
-  delayMicroseconds(4);
-  digitalWriteFast(ACK, HIGH);
+    // Sometimes the code executes quicker than real hardware
+    // There seems to be enough delay in the code that there's no need for an additional delay
+    //delayMicroseconds(3);
+    digitalWriteFast(ACK, LOW);
+    // Keep ACK low for 4 uS
+    delayMicroseconds(4);
+    digitalWriteFast(ACK, HIGH);
 }
 
 // Bit of a work around here to prevent drowning out other SIO devices while inactive
@@ -13,6 +16,7 @@ void SPI_Passive()
 {
     digitalWriteFast(MISO, HIGH);
     pinModeFast(MISO, INPUT);
+    digitalWriteFast(ACK, HIGH);
     pinModeFast(ACK, INPUT);
 }
 

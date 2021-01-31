@@ -7,19 +7,28 @@
 
   Read/Write working over serial using memcarduino protocol
 
-# ISSUES
-  Still working on juggling the Serial and SIO comms, may still be causing some comms interference.
+  Basic pad imitation working, no way to send button states yet
+
+  Serial commands can be used to set pad/card SIO interfaces to active/inactive
+
   
-  Project is still a bit cobbled together and documentation lacking. As things are more refined I will work on updating this.
+# ISSUES
+  Directory entries past 3rd block not supressed, though the sectors themselves are.
+
+  If device is powered externally and disconnected from a console, serial commands are unavailable unless the slave select pin is pulled high.
 
 # To-do
-  Fix SIO Ignore/Sleep mode
-
-  Supress directory entries beyond available blocks
-   
+  Upload PC software for serial communication, currently using modified code from https://github.com/taka-tuos/memcarduinoplus
+  
+  Supress directory entries beyond available blocks.
+ 
   Sleep SIO if ATT+SCK stay low - i.e. if not connected to console
+
+  Reevaluate/rewrite ACK exchange behavior
   
   Fix up platformio.ini
+
+  Rewrite code for flash memory page sizes + far memory access for future Mega 2560 support
 
 # Connections / Hardware
   Arduino Pro Mini 328P 8Mhz @ 3.3V w/ Minicore by MCUDude - https://github.com/MCUdude/MiniCore/

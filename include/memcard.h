@@ -9,7 +9,7 @@
 // Mega 2560 pages are 256 bytes, needs changes
 #define NUMBER_OF_BLOCKS 3
 // Define the number of pages you want to write to here (limited by flash size)
-#define NUMBER_OF_PAGES NUMBER_OF_BLOCKS*64
+#define NUMBER_OF_PAGES NUMBER_OF_BLOCKS * 64
 
 // Implement actual bit manipulation later
 // Need more info on FLAG bits.
@@ -32,7 +32,7 @@ enum MC_Commands : byte
 
 enum MC_Responses : byte
 {
-    Idle_High = 0xFF,   // Not fully tested, but Slave Out seems to idle high
+    Idle_High = 0xFF,   // High default state
     Dummy = 0x00,       // Filler Data
     ID1 = 0x5A,         // Memory Card ID1
     ID2 = 0x5D,         // Memory Card ID2
@@ -43,24 +43,17 @@ enum MC_Responses : byte
     BadSector = 0xFF    // Bad Memory Card Sector
 };
 
-
-extern const uint8_t FlashData[SPM_PAGESIZE * NUMBER_OF_PAGES] __attribute__ (( aligned(SPM_PAGESIZE) )) PROGMEM;
+extern const uint8_t FlashData[SPM_PAGESIZE * NUMBER_OF_PAGES] __attribute__((aligned(SPM_PAGESIZE))) PROGMEM;
 extern byte MC_FLAG;
 
-extern byte MC_Cur_Cmnd;
-extern uint8_t MC_Cmnd_Ticks;
 extern uint16_t MC_Sector;
-extern byte MC_Sector_Offset;
-extern byte MC_Checksum_Out;
-extern byte MC_Checksum_In;
 extern bool MC_SendAck;
-extern uint8_t MC_DataBuffer[];
-extern bool MC_BufferFull;
 
+void MC_CommitUncommited();
 void MC_GoIdle();
+byte MC_ProcessMemCardEvents(byte);
 byte MC_ReadCmnd_Tick(byte &);  //PSX 52h
 byte MC_WriteCmnd_Tick(byte &); //PSX 57h
 void MC_CommitWrite();
-
 
 #endif //MC1DATA_H
