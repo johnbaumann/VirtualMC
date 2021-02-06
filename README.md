@@ -5,27 +5,27 @@
   
   Read/Write functions working on console
 
-  Read/Write working over serial using memcarduino protocol
+  Read/Write working over serial using memcarduino protocol, compatible with MemcardRex
 
-  Basic pad imitation working, no way to send button states yet
+  Device can function as a digital pad. Pad state is sent over serial, accurate timing requires a pin for RTS/CTS flow control
 
   Serial commands can be used to set pad/card SIO interfaces to active/inactive
+  
+  Memory Card and Pad are enabled by default
 
   
 # ISSUES
-  Directory entries past 3rd block not supressed, though the sectors themselves are.
+  Directory entries past 3rd block not suppressed, though the sectors themselves are.
 
   If device is powered externally and disconnected from a console, serial commands are unavailable unless the slave select pin is pulled high.
 
 # To-do
-  Upload PC software for serial communication, currently using modified code from https://github.com/taka-tuos/memcarduinoplus
+  Write a program or python script for mapping inputs and sending them over serial
   
-  Supress directory entries beyond available blocks.
+  Suppress directory entries beyond available blocks.
  
   Sleep SIO if ATT+SCK stay low - i.e. if not connected to console
-
-  Reevaluate/rewrite ACK exchange behavior
-  
+ 
   Fix up platformio.ini
 
   Rewrite code for flash memory page sizes + far memory access for future Mega 2560 support
@@ -52,7 +52,7 @@
 
   7 -> 13   // Clock/CLK/SCK
 
-  8 -> 2    // ACK/Acknowledge
+  8 -> 9    // ACK/Acknowledge
   
   FTDI to Arduino
 
@@ -62,7 +62,11 @@
 
   GND -> GND
 
-  Small(0.1uF etc) capacitor between RST and RTS for auto reset
+  CTS ->2
 
-  Reset not explicitly required, useful for reflashing
-  
+  RTS ->3 //Not monitored by arduino atm, keeping here for future compatibility.
+
+Various code and snippets from the following sources
+https://github.com/ShendoXT/memcarduino
+https://github.com/taka-tuos/memcarduinoplus
+https://problemkaputt.de/psx-spx.htm
