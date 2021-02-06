@@ -1,8 +1,11 @@
 #include "pad.h"
 
 uint8_t PAD_Cmnd_Ticks;
-uint8_t PAD_Cur_Cmnd = PAD_Commands::_None;
-uint16_t PAD_Switches = 0xFFFF;
+byte PAD_Cur_Cmnd = PAD_Commands::_None;
+
+uint16_t PAD_DigitalSwitches = 0xFFFF;
+uint16_t PAD_Analog1 = 0xFFFF;
+uint16_t PAD_Analog2 = 0xFFFF;
 
 bool PAD_SendAck = true;
 
@@ -12,7 +15,7 @@ void PAD_GoIdle()
     PAD_SendAck = true;
 }
 
-byte PAD_ProcessPadEvents(byte DataIn)
+byte PAD_ProcessEvents(byte DataIn)
 {
     byte DataOut = 0x69;
 
@@ -27,11 +30,11 @@ byte PAD_ProcessPadEvents(byte DataIn)
         break;
 
     case 2:
-        DataOut = 0xFF;
+        DataOut = lowByte(PAD_DigitalSwitches);
         break;
 
     case 3:
-        DataOut = 0xFF;
+        DataOut = highByte(PAD_DigitalSwitches);
         PAD_GoIdle();
         break;
 
@@ -42,13 +45,6 @@ byte PAD_ProcessPadEvents(byte DataIn)
     }
 
     PAD_Cmnd_Ticks++;
-
-    return DataOut;
-}
-
-byte PAD_ReadPadTicks(byte DataIn)
-{
-    byte DataOut = 0xFF;
 
     return DataOut;
 }

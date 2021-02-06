@@ -12,6 +12,7 @@
 
 void setup(void)
 {
+  Serial_Init();
   SPI_Init();
   // Reset Memory Card commands/variables
   MC_GoIdle();
@@ -19,6 +20,7 @@ void setup(void)
 
 void loop()
 {
+  bool SlaveSelected = false;
   while (1)
   {
 
@@ -29,7 +31,19 @@ void loop()
     //Push response to SPDR
 
     // Slave bus not selected
-    if (digitalReadFast(SS) == HIGH || Serial_IdleTicks < SERIALTIMEOUTTICKS)
+    if (digitalReadFast(SS) == HIGH)
+    {
+      SlaveSelected = false;
+      if(SIO_IdleTicks < SIOMAXIDLETICKS)
+        SIO_IdleTicks++;
+    }
+    else
+    {
+      SlaveSelected = true;
+      SIO_IdleTicks = 0;
+    }
+
+    if (!SlaveSelected || Serial_Busy())
     {
       // Status not idle, reset SIO/SPI state
       if (CurrentSIOCommand != PS1_SIOCommands::Idle)
@@ -45,19 +59,23 @@ void loop()
         SPI_Passive();
         SPI_Enable();
         // Prepare the SPI Register with some fill data
-        SPDR = MC_Responses::Idle_High;
+        SPDR = 0xFF;
 
         // Serial requires interrupts, toggle on and resume serial
         interrupts();
         Serial.begin(38400);
       }
+      if(RTS_Status == false && SIO_IdleTicks >= SIOMAXIDLETICKS && Serial_ActiveTicks < SERIALMAXACTIVETICKS)
+      {
+        RTS_Status = true;
+        digitalWriteFast(RTS_Pin, LOW);
+      }
       // Check for serial commands,
-      // Enter any loops required
       // Update Serial_IdleTicks
       Serial_ProcessEvents();
     }
     // Slave bus selected
-    else
+    else if (SlaveSelected && !Serial_Busy())
     {
       SIO_ProcessEvents();
       // Exit SIO Loop

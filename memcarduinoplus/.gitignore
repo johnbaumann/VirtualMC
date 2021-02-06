@@ -35,6 +35,7 @@
 *.i*86
 *.x86_64
 *.hex
+*.bat
 
 # Debug files
 *.dSYM/
@@ -53,3 +54,5 @@ dkms.conf
 
 # Others
 *.mcr
+*.mc
+.py

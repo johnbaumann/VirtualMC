@@ -1,6 +1,8 @@
 #include "memcard.h"
 #include "testdata.h"
 
+
+
 //Allocate space for memory card data
 //SPM_PAGESIZE = 128 bytes on ATMEGA328P
 
@@ -31,7 +33,7 @@ void MC_GoIdle()
   MC_Sector_Offset = 0;
 }
 
-byte MC_ProcessMemCardEvents(byte DataIn)
+byte MC_ProcessEvents(byte DataIn)
 {
   byte DataOut;
   bool cmdRouted = false;
@@ -57,13 +59,11 @@ byte MC_ProcessMemCardEvents(byte DataIn)
       {
         MC_Cur_Cmnd = DataIn;
         // Re-evaluate command
-        cmdRouted = false;
       }
       else
       {
         // Unknown command
         MC_Cur_Cmnd = MC_Commands::Error;
-        cmdRouted = false;
       }
       break;
 

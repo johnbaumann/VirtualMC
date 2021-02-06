@@ -10,6 +10,7 @@ enum PAD_Commands : byte
     _None = 0x00    // No command, idle state
 };
 
+// https://problemkaputt.de/psx-spx.htm#controllersandmemorycards
 enum PAD_Types : uint16_t
 {
     Mouse = 0x5A12,           // (two button mouse)
@@ -26,9 +27,12 @@ enum PAD_Types : uint16_t
 };
 
 extern bool PAD_SendAck;
+extern uint16_t PAD_DigitalSwitches;
+extern uint16_t PAD_Analog1;
+extern uint16_t PAD_Analog2;
 
 void PAD_GoIdle();
-byte PAD_ProcessPadEvents(byte);
+byte PAD_ProcessEvents(byte);
 byte PAD_ReadPadTicks(byte);
 
 #endif

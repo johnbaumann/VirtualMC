@@ -9,7 +9,7 @@
 #include "memcard.h"
 #include "pad.h"
 #include "optiboot.h"
-#include "pccomms.h"
+#include "serial.h"
 #include "sio.h"
 #include "spi.h"
 

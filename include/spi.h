@@ -15,6 +15,6 @@ void SPI_Init();
 
 void SEND_ACK();
 
-static const uint8_t ACK = 2;
+static const uint8_t ACK_Pin = 9;
 
 #endif // SPI_H

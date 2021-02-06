@@ -40,7 +40,8 @@
 #include <WinBase.h>
 #include "serial.h"
 
-struct serial {
+struct serial
+{
 	char devfile[BUFSIZ];
 	HANDLE handle;
 };
@@ -62,17 +63,21 @@ SERIAL *serial_open(const char *devfile, const enum SerialBaud baud)
 	/*
 	 * シリアルデスクリプタの管理領域を確保する.
 	 */
-	SERIAL *s = (SERIAL *) malloc(sizeof(SERIAL));
-	if (s == NULL) {
+	SERIAL *s = (SERIAL *)malloc(sizeof(SERIAL));
+	if (s == NULL)
+	{
 		return NULL;
 	}
 
 	/*
 	 * ポート名を決定する.
 	 */
-	if (strstr(devfile, "\\\\.\\") == NULL) {
+	if (strstr(devfile, "\\\\.\\") == NULL)
+	{
 		strcpy(s->devfile, "\\\\.\\");
-	} else {
+	}
+	else
+	{
 		strcpy(s->devfile, "");
 	}
 	strcat(s->devfile, devfile);
@@ -81,14 +86,15 @@ SERIAL *serial_open(const char *devfile, const enum SerialBaud baud)
 	 * ポートを開く.
 	 */
 	s->handle = CreateFile(
-			s->devfile,
-			GENERIC_READ | GENERIC_WRITE,
-			0,
-			NULL,
-			OPEN_EXISTING,
-			0,
-			NULL);
-	if (s->handle == INVALID_HANDLE_VALUE) {
+		s->devfile,
+		GENERIC_READ | GENERIC_WRITE,
+		0,
+		NULL,
+		OPEN_EXISTING,
+		0,
+		NULL);
+	if (s->handle == INVALID_HANDLE_VALUE)
+	{
 		free(s);
 		return NULL;
 	}
@@ -96,11 +102,13 @@ SERIAL *serial_open(const char *devfile, const enum SerialBaud baud)
 	/*
 	 * ポートの設定を行う。
 	 */
-	if (!GetCommState(s->handle, &param)) {
+	if (!GetCommState(s->handle, &param))
+	{
 		free(s);
 		return NULL;
 	}
-	switch (baud) {
+	switch (baud)
+	{
 	case SerialBaud2400:
 		param.BaudRate = CBR_2400;
 		break;
@@ -126,7 +134,15 @@ SERIAL *serial_open(const char *devfile, const enum SerialBaud baud)
 	param.ByteSize = 8;
 	param.StopBits = ONESTOPBIT;
 	param.Parity = NOPARITY;
-	if(!SetCommState(s->handle, &param)){
+	param.fInX = FALSE;
+	param.fOutX = FALSE;
+	param.fOutxCtsFlow = TRUE;
+	param.fOutxDsrFlow = FALSE;
+	param.fRtsControl = RTS_CONTROL_DISABLE;
+	param.fDtrControl = DTR_CONTROL_DISABLE;
+
+	if (!SetCommState(s->handle, &param))
+	{
 		free(s);
 		return NULL;
 	}
@@ -149,7 +165,7 @@ SERIAL *serial_open(const char *devfile, const enum SerialBaud baud)
  *
  * @return 成功したら0を返す.
  */
-int serial_close(SERIAL * s)
+int serial_close(SERIAL *s)
 {
 
 	/*
@@ -182,7 +198,7 @@ int serial_close(SERIAL * s)
  *
  * @return 成功したら0を返す.
  */
-int serial_read(SERIAL * s, unsigned char *buf, const size_t size)
+int serial_read(SERIAL *s, unsigned char *buf, const size_t size)
 {
 	int e = 0;
 	DWORD cnt;
@@ -190,7 +206,8 @@ int serial_read(SERIAL * s, unsigned char *buf, const size_t size)
 	/*
 	 * 読み込みを実行する. Perform a read.
 	 */
-	if(!ReadFile(s->handle, buf, size, &cnt, NULL)){
+	if (!ReadFile(s->handle, buf, size, &cnt, NULL))
+	{
 		e = 1;
 	}
 
@@ -208,8 +225,8 @@ int serial_read(SERIAL * s, unsigned char *buf, const size_t size)
  *
  * @return 成功したら0を返す. Returns 0 if successful.
  */
-int serial_read_with_timeout(SERIAL * s,
-		unsigned char *buf, const size_t size, const int ms)
+int serial_read_with_timeout(SERIAL *s,
+							 unsigned char *buf, const size_t size, const int ms)
 {
 	int e = 0;
 	DWORD cnt = 0;
@@ -223,7 +240,8 @@ int serial_read_with_timeout(SERIAL * s,
 	cto.ReadIntervalTimeout = 0;
 	cto.ReadTotalTimeoutConstant = ms;
 	cto.ReadTotalTimeoutMultiplier = 0;
-	if(!SetCommTimeouts(s->handle, &cto)){
+	if (!SetCommTimeouts(s->handle, &cto))
+	{
 		e = 1;
 	}
 
@@ -231,9 +249,11 @@ int serial_read_with_timeout(SERIAL * s,
 	 * 読み込みを実行する.
 	 * Perform a read
 	 */
-	while (total < size) {
+	while (total < size)
+	{
 		ReadFile(s->handle, buf, size, &cnt, NULL);
-		if (cnt != size) {
+		if (cnt != size)
+		{
 			e = 2;
 			break;
 		}
@@ -254,8 +274,8 @@ int serial_read_with_timeout(SERIAL * s,
  *
  * @return 成功したら0を返す. Returns 0 if successful.
  */
-int serial_write(SERIAL * s,
-		const unsigned char *buf, const size_t size)
+int serial_write(SERIAL *s,
+				 const unsigned char *buf, const size_t size)
 {
 	int e = 0;
 	DWORD cnt;
@@ -264,7 +284,8 @@ int serial_write(SERIAL * s,
 	 * 書き込みを実行する.
 	 * Perform a write.
 	 */
-	if(!WriteFile(s->handle, buf, size, &cnt, NULL)){
+	if (!WriteFile(s->handle, buf, size, &cnt, NULL))
+	{
 		e = 1;
 	}
 
@@ -279,9 +300,9 @@ int serial_write(SERIAL * s,
  *
  * @return 受け取っていないデータのバイト数を返す. Returns the number of bytes of data that has not been received.
  */
-int serial_avaiable(SERIAL * s)
+int serial_avaiable(SERIAL *s)
 {
-	DWORD dwErrors,dwEvent;
+	DWORD dwErrors, dwEvent;
 	COMSTAT ComStat;
 
 	ClearCommError(s->handle, &dwErrors, &ComStat);

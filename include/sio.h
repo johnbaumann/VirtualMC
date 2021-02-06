@@ -5,8 +5,9 @@
 #include "memcard.h"
 #include "pad.h"
 #include "spi.h"
+#include "serial.h"
 
-#define SIOMAXIDLETICKS 0x7FFF
+#define SIOMAXIDLETICKS 0x000C
 
 enum PS1_SIOCommands : byte
 {
@@ -18,11 +19,12 @@ enum PS1_SIOCommands : byte
 };
 
 extern byte CurrentSIOCommand;
-extern uint16_t SIO_TimeoutTicks;
+extern uint16_t SIO_IdleTicks;
 
 extern bool bMemCardEnabled;
 extern bool bPadEnabled;
 
+void SIO_Init();
 void SIO_ProcessEvents();
 byte SIO_ProcessPadEvents(byte);
 

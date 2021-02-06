@@ -51,7 +51,7 @@ extern bool MC_SendAck;
 
 void MC_CommitUncommited();
 void MC_GoIdle();
-byte MC_ProcessMemCardEvents(byte);
+byte MC_ProcessEvents(byte);
 byte MC_ReadCmnd_Tick(byte &);  //PSX 52h
 byte MC_WriteCmnd_Tick(byte &); //PSX 57h
 void MC_CommitWrite();

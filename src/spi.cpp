@@ -5,10 +5,10 @@ void SEND_ACK()
     // Sometimes the code executes quicker than real hardware
     // There seems to be enough delay in the code that there's no need for an additional delay
     //delayMicroseconds(3);
-    digitalWriteFast(ACK, LOW);
+    digitalWriteFast(ACK_Pin, LOW);
     // Keep ACK low for 4 uS
     delayMicroseconds(4);
-    digitalWriteFast(ACK, HIGH);
+    digitalWriteFast(ACK_Pin, HIGH);
 }
 
 // Bit of a work around here to prevent drowning out other SIO devices while inactive
@@ -16,8 +16,8 @@ void SPI_Passive()
 {
     digitalWriteFast(MISO, HIGH);
     pinModeFast(MISO, INPUT);
-    digitalWriteFast(ACK, HIGH);
-    pinModeFast(ACK, INPUT);
+    digitalWriteFast(ACK_Pin, HIGH);
+    pinModeFast(ACK_Pin, INPUT);
 }
 
 // Reactivate regular SPI communication
@@ -25,7 +25,7 @@ void SPI_Active()
 {
     digitalWriteFast(MISO, HIGH);
     pinModeFast(MISO, OUTPUT);
-    pinModeFast(ACK, OUTPUT);
+    pinModeFast(ACK_Pin, OUTPUT);
 }
 
 // Toggle SPI off, used for ignoring pad commands on same slave bus
@@ -59,7 +59,7 @@ void SPI_Init()
     pinModeFast(SS, INPUT);
     pinModeFast(MOSI, INPUT);
     pinModeFast(MISO, INPUT);
-    pinModeFast(ACK, INPUT);
+    pinModeFast(ACK_Pin, INPUT);
 
     // Set bits in the SPCR register
     //SPCR |= _BV(SPR0) | _BV(SPR1) | _BV(CPHA) | _BV(CPOL) & ~_BV(MSTR) | _BV(DORD) | _BV(SPE) & ~_BV(SPIE); // = 0x6F

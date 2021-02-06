@@ -2,10 +2,10 @@
 
 byte CurrentSIOCommand = PS1_SIOCommands::Idle;
 
-uint16_t SIO_TimeoutTicks = 0;
+uint16_t SIO_IdleTicks = 0;
 
 bool bMemCardEnabled = true;
-bool bPadEnabled = false;
+bool bPadEnabled = true;
 
 void SIO_ProcessEvents()
 {
@@ -24,7 +24,14 @@ void SIO_ProcessEvents()
         if (CurrentSIOCommand == PS1_SIOCommands::Idle)
         {
             // Terminate Serial comms
+            if (RTS_Status == true)
+            {
+                RTS_Status = false;
+                digitalWriteFast(RTS_Pin, HIGH);
+            }
+            Serial_ActiveTicks = 0;
             Serial.end();
+            Serial_GoIdle();
             // Re-enable SPI output
             SPI_Active();
             // Turn off interrupts for SIO timing
@@ -54,7 +61,7 @@ void SIO_ProcessEvents()
                     // Byte exchange is offset by one
                     // This offsets the ACK signal accordingly
                     bTempAck = MC_SendAck;
-                    DataOut = MC_ProcessMemCardEvents(DataIn);
+                    DataOut = MC_ProcessEvents(DataIn);
                 }
                 else
                 {
@@ -70,7 +77,7 @@ void SIO_ProcessEvents()
                 if (bPadEnabled)
                 {
                     bTempAck = PAD_SendAck;
-                    DataOut = PAD_ProcessPadEvents(DataIn);
+                    DataOut = PAD_ProcessEvents(DataIn);
                 }
                 else
                 {
