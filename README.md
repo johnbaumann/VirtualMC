@@ -67,6 +67,10 @@
   RTS ->3 //Not monitored by arduino atm, keeping here for future compatibility.
 
 Various code and snippets from the following sources
+
 https://github.com/ShendoXT/memcarduino
+
 https://github.com/taka-tuos/memcarduinoplus
+
 https://problemkaputt.de/psx-spx.htm
+
