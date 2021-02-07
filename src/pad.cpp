@@ -17,7 +17,7 @@ void PAD_GoIdle()
 
 byte PAD_ProcessEvents(byte DataIn)
 {
-    byte DataOut = 0x69;
+    byte DataOut = 0xFF;
 
     switch (PAD_Cmnd_Ticks)
     {
