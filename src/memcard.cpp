@@ -2,10 +2,6 @@
 #include "testdata.h"
 
 
-
-//Allocate space for memory card data
-//SPM_PAGESIZE = 128 bytes on ATMEGA328P
-
 byte MC_FLAG = MC_Flags::Directory_Unread;
 
 byte MC_Cur_Cmnd;
@@ -45,7 +41,7 @@ byte MC_ProcessEvents(byte DataIn)
     {
       // No command yet
     case MC_Commands::None:
-      // Waiting for command, store incoming byte as command
+      // Store incoming byte as command
       MC_Cur_Cmnd = DataIn;
       // Store FLAG byte in outbound variable
       DataOut = MC_FLAG;
@@ -59,11 +55,14 @@ byte MC_ProcessEvents(byte DataIn)
       {
         MC_Cur_Cmnd = DataIn;
         // Re-evaluate command
+        // cmdRouted = false;
       }
       else
       {
         // Unknown command
         MC_Cur_Cmnd = MC_Commands::Error;
+        // Re-evaluate command
+        // cmdRouted = false;
       }
       break;
 
