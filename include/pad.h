@@ -7,7 +7,8 @@ enum PAD_Commands : byte
 {
     _Access = 0x01, // Pad Select
     _Read = 0x42,   // Read Command
-    _None = 0x00    // No command, idle state
+    _None = 0x00,    // No command, idle state
+    _Error = 0xFF    // Bad command
 };
 
 // https://problemkaputt.de/psx-spx.htm#controllersandmemorycards
@@ -33,6 +34,6 @@ extern uint16_t PAD_Analog2;
 
 void PAD_GoIdle();
 byte PAD_ProcessEvents(byte);
-byte PAD_ReadPadTicks(byte);
+byte PAD_ReadCmnd_Tick(byte);
 
 #endif

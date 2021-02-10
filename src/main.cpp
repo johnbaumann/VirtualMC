@@ -16,6 +16,7 @@ void setup(void)
   SPI_Init();
   // Reset Memory Card commands/variables
   MC_GoIdle();
+  PAD_GoIdle();
 }
 
 void loop()
