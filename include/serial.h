@@ -46,6 +46,7 @@ void Serial_GoIdle();
 void Serial_Init();
 void Serial_ProcessEvents();
 void Serial_ReadFrame(unsigned int);  //Serial
+void Serial_Reset();
 void Serial_WriteFrame(unsigned int); //Serial
 
 #endif

@@ -26,7 +26,6 @@ void Serial_ReceivePAD()
 
     case 2:
         Temp_PAD_DigitalSwitches |= Serial.read();
-        PAD_DigitalSwitches = Temp_PAD_DigitalSwitches;
         break;
 
     case 3:
@@ -35,7 +34,6 @@ void Serial_ReceivePAD()
 
     case 4:
         Temp_PAD_Analog1 |= Serial.read();
-        PAD_Analog1 = Temp_PAD_Analog1;
         break;
 
     case 5:
@@ -44,8 +42,10 @@ void Serial_ReceivePAD()
 
     case 6:
         Temp_PAD_Analog2 |= Serial.read();
+        PAD_Analog1 = Temp_PAD_Analog1;
         PAD_Analog2 = Temp_PAD_Analog2;
-        Serial_GoIdle();
+        PAD_DigitalSwitches = Temp_PAD_DigitalSwitches;
+        Serial_Reset();
         break;
     }
 }
@@ -65,6 +65,11 @@ bool Serial_Busy()
 }
 
 void Serial_GoIdle()
+{
+
+}
+
+void Serial_Reset()
 {
     Serial_Cur_Cmnd = Serial_Commands::SER_None;
     Serial_Cmnd_Ticks = 0;
@@ -103,7 +108,7 @@ void Serial_ReadFrame(unsigned int Address)
     Serial.write(Serial_Checksum);      //Checksum (MSB xor LSB xor Data)
     Serial.write(MC_Responses::GoodRW); //Memory Card status byte*/
     MC_FLAG = MC_Flags::Directory_Unread;
-    Serial_GoIdle();
+    Serial_Reset();
 }
 
 //Write a frame from the serial port to the Memory Card
@@ -149,7 +154,7 @@ void Serial_WriteFrame(unsigned int Address)
         Serial.write(MC_Responses::BadChecksum);
     }
 
-    Serial_GoIdle();
+    Serial_Reset();
 }
 
 // Directly adapted from Memcarduino by ShendoXT
@@ -187,13 +192,13 @@ void Serial_ProcessEvents()
                 case Serial_Commands::SER_Get_ID_:
                     Serial.write(IDENTIFIER);
                     cmdRouted = true;
-                    Serial_GoIdle();
+                    Serial_Reset();
                     break;
 
                 case Serial_Commands::SER_Get_Version:
                     Serial.write(VERSION);
                     cmdRouted = true;
-                    Serial_GoIdle();
+                    Serial_Reset();
                     break;
 
                 case Serial_Commands::SER_MC_Read:
@@ -217,7 +222,7 @@ void Serial_ProcessEvents()
                     }
                     Serial.write(OKAY);
                     cmdRouted = true;
-                    Serial_GoIdle();
+                    Serial_Reset();
                     break;
 
                 case Serial_Commands::SER_PAD_Off:
@@ -227,7 +232,7 @@ void Serial_ProcessEvents()
                     }
                     Serial.write(OKAY);
                     cmdRouted = true;
-                    Serial_GoIdle();
+                    Serial_Reset();
                     break;
 
                 case Serial_Commands::SER_MC_On:
@@ -238,7 +243,7 @@ void Serial_ProcessEvents()
                     }
                     Serial.write(OKAY);
                     cmdRouted = true;
-                    Serial_GoIdle();
+                    Serial_Reset();
                     break;
 
                 case Serial_Commands::SER_MC_Off:
@@ -249,13 +254,13 @@ void Serial_ProcessEvents()
                     }
                     Serial.write(OKAY);
                     cmdRouted = true;
-                    Serial_GoIdle();
+                    Serial_Reset();
                     break;
 
                 default:
                     Serial.write(ERROR);
                     cmdRouted = true;
-                    Serial_GoIdle();
+                    Serial_Reset();
                     break;
                 }
             }
