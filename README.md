@@ -1,7 +1,7 @@
 # VirtualMC
-  Experimental implementation of an Arduino as a Playstation 1 Memory Card - This is still a work in progress, updates are mostly stable but may have unexpected results
+  Experimental implementation of an Arduino as a Playstation 1 Memory Card(and now game pad) - This is still a work in progress, updates are mostly stable but may have unexpected results
   
-  Game save data is stored in program memory, with space for 3 blocks = Directory + 2 save files
+  Game save data is stored in program memory, with space for 3 blocks = Directory + 2 save files -Plans to adapt the code for MEGA2560 to expand storage
   
   Read/Write functions working on console
 
