@@ -1,5 +1,5 @@
 """Simple gamepad/joystick test example."""
-# https://raw.githubusercontent.com/zeth/inputs/master/examples/jstest_microbit.py
+# https://raw.githubusercontent.com/zeth/inputs/master/examples/jstest.py
 
 from __future__ import print_function
 
@@ -53,6 +53,8 @@ ser = serial.Serial(
 
 ser.port = 'COM14'
 ser.rts = False
+
+waiting_for_last_event = False
 
 
 def pad_press(button_mask):
@@ -189,7 +191,7 @@ class JSTest(object):
                     pad_release(PADX)
 
             if key == 'HY':
-                print("hy")
+                # print("hy")
                 if(value == -1):
                     pad_release(PADDOWN)
                     pad_press(PADUP)
@@ -215,7 +217,7 @@ class JSTest(object):
                     pad_release(PADUP)
                     pad_press(PADDOWN)
 
-            if key == 'HX':
+            elif key == 'HX':
                 if(value == -1):
                     pad_release(PADRIGHT)
                     pad_press(PADLEFT)
@@ -234,35 +236,50 @@ class JSTest(object):
                 elif(value == 0):
                     pad_release(PADTRI)
 
-            if key == 'E':
+            elif key == 'E':
                 if(value == 1):
                     pad_press(PADCRC)
                 elif(value == 0):
                     pad_release(PADCRC)
 
-            if key == 'S':
+            elif key == 'S':
                 if(value == 1):
                     pad_press(PADX)
                 elif(value == 0):
                     pad_release(PADX)
 
-            if key == 'W':
+            elif key == 'W':
                 if(value == 1):
                     pad_press(PADSQR)
                 elif(value == 0):
                     pad_release(PADSQR)
 
-            if key == 'ST':
+            elif key == 'ST':
                 if(value == 1):
                     pad_press(PADSTART)
                 elif(value == 0):
                     pad_release(PADSTART)
 
-            if key == 'SEL':
+            elif key == 'SEL':
                 if(value == 1):
                     pad_press(PADSELECT)
                 elif(value == 0):
                     pad_release(PADSELECT)
+
+            elif key == 'TL':
+                if(value == 1):
+                    pad_press(PADL1)
+                elif(value == 0):
+                    pad_release(PADL1)
+
+            elif key == 'TR':
+                if(value == 1):
+                    pad_press(PADR1)
+                elif(value == 0):
+                    pad_release(PADR1)
+
+            elif value > 0:
+                print(key)
 
     def output_state(self, ev_type, abbv):
         """Print out the output state."""
@@ -270,13 +287,13 @@ class JSTest(object):
             if self.btn_state[abbv] != self.old_btn_state[abbv]:
                 self.set_pad_mask()
                 send_pad_serial()
-                print(hex(PAD_DigitalSwitches))
+                # print(hex(PAD_DigitalSwitches))
                 return
 
         if abbv[0] == 'H':
             self.set_pad_mask()
             send_pad_serial()
-            print(hex(PAD_DigitalSwitches))
+            # print(hex(PAD_DigitalSwitches))
             return
 
         difference = self.abs_state[abbv] - self.old_abs_state[abbv]
@@ -284,11 +301,19 @@ class JSTest(object):
             print(self.format_state())
 
     def process_events(self):
+        global waiting_for_last_event
         """Process available events."""
         try:
             events = self.gamepad.read()
         except EOFError:
             events = []
+
+            if waiting_for_last_event:
+                if ser.cts == False:
+                    waiting_for_last_event = False
+                else:
+                    return
+
         for event in events:
             self.process_event(event)
 

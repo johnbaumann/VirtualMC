@@ -41,7 +41,6 @@ void loop()
     else
     {
       SlaveSelected = true;
-      SIO_IdleTicks = 0;
     }
 
     if (!SlaveSelected || Serial_Busy())

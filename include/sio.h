@@ -7,7 +7,7 @@
 #include "spi.h"
 #include "serial.h"
 
-#define SIOMAXIDLETICKS 0x000C
+#define SIOMAXIDLETICKS 0x0017
 
 enum PS1_SIOCommands : byte
 {

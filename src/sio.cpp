@@ -43,6 +43,7 @@ void SIO_ProcessEvents()
         // Check SPI status register
         if (SPI_Data_Ready())
         {
+            SIO_IdleTicks = 0;
             // Store incoming data to variable
             DataIn = SPDR;
 
