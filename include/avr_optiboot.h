@@ -20,13 +20,11 @@
  | bootloader spm function.                                                 |
  |-------------------------------------------------------------------------*/
 
-
-#ifndef _OPTIBOOT_H_
-#define _OPTIBOOT_H_  1
+#ifndef _AVR_OPTIBOOT_H_
+#define _AVR_OPTIBOOT_H_ 1
 
 #include <avr/boot.h>
-#include "Arduino.h"
-
+#include <stdint.h>
 
 /* 
  * Main 'magic' function - enter to bootloader do_spm function
@@ -42,7 +40,6 @@
 // 'typedef' (in following line) and 'const' (few lines below) are a way to define external function at some arbitrary address
 typedef void (*do_spm_t)(uint16_t address, uint8_t command, uint16_t data);
 
-
 /*
  * Devices with more than 64KB of flash:
  * - have larger bootloader area (1KB) (they are BIGBOOT targets)
@@ -50,15 +47,15 @@ typedef void (*do_spm_t)(uint16_t address, uint8_t command, uint16_t data);
  * - need larger variable to hold address (pgmspace.h uses uint32_t)
  */
 #ifdef RAMPZ
-  typedef uint32_t optiboot_addr_t;
+typedef uint32_t optiboot_addr_t;
 #else
-  typedef uint16_t optiboot_addr_t;
+typedef uint16_t optiboot_addr_t;
 #endif
 
 #if FLASHEND > 65534
-  const do_spm_t do_spm = (do_spm_t)((FLASHEND-1023+2)>>1);
+const do_spm_t do_spm = (do_spm_t)((FLASHEND - 1023 + 2) >> 1);
 #else
-  const do_spm_t do_spm = (do_spm_t)((FLASHEND-511+2)>>1);
+const do_spm_t do_spm = (do_spm_t)((FLASHEND - 511 + 2) >> 1);
 #endif
 
 void do_spm_cli(optiboot_addr_t, uint8_t, uint16_t);
@@ -69,4 +66,4 @@ void optiboot_readPage(const uint8_t[], uint8_t[], uint16_t, char);
 void optiboot_readPage(const uint8_t[], uint8_t[], uint16_t);
 void optiboot_writePage(const uint8_t[], uint8_t[], uint16_t);
 
-#endif /* _OPTIBOOT_H_ */
+#endif /* _AVR_OPTIBOOT_H_ */

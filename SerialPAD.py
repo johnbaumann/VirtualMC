@@ -51,7 +51,7 @@ ser = serial.Serial(
     dsrdtr=False
 )
 
-ser.port = 'COM14'
+ser.port = 'COM12'
 ser.rts = False
 
 waiting_for_last_event = False

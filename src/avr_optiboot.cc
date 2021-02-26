@@ -1,4 +1,6 @@
-#include "optiboot.h"
+#include "avr_optiboot.h"
+
+#include <Arduino.h>
 
 /*
  * The same as do_spm but with disable/restore interrupts state

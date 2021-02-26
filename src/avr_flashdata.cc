@@ -1,5 +1,4 @@
-#ifndef TESTDATA_H
-#define TESTDATA_H
+#include "avr_flashdata.h"
 
 #include <Arduino.h>
 
@@ -1031,5 +1030,3 @@ const uint8_t FlashData[SPM_PAGESIZE * NUMBER_OF_PAGES] __attribute__((aligned(S
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 
 };
-
-#endif

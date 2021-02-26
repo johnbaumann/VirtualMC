@@ -1,20 +1,33 @@
-#include "serial.h"
+#include "avr_serial.h"
 
-byte Serial_In = 0x00;
-byte Serial_Out = 0xFF;
-byte Serial_Checksum = 0x00;
+#include <Arduino.h>
+
+#include "avr_digitalWriteFast.h"
+#include "avr_flashdata.h"
+#include "avr_optiboot.h"
+#include "sio.h"
+#include "sio_memory_card.h"
+#include "sio_controller.h"
+
+uint8_t Serial_In = 0x00;
+uint8_t Serial_Out = 0xFF;
+uint8_t Serial_Checksum = 0x00;
 uint16_t Serial_ActiveTicks = 0;
 uint16_t Serial_IdleTicks = 0;
 bool bSerialBusy = false;
 bool RTS_Status = false;
 
-byte Serial_Cur_Cmnd = Serial_Commands::SER_None;
-byte Serial_Last_Cmnd = Serial_Commands::SER_None;
-byte Serial_Cmnd_Ticks = 0;
+uint8_t Serial_Cur_Cmnd = Serial_Commands::SER_None;
+uint8_t Serial_Last_Cmnd = Serial_Commands::SER_None;
+uint8_t Serial_Cmnd_Ticks = 0;
 
 uint16_t Temp_PAD_DigitalSwitches = 0xFFFF;
 uint16_t Temp_PAD_Analog1 = 0xFFFF;
 uint16_t Temp_PAD_Analog2 = 0xFFFF;
+
+#define NUMBER_OF_BLOCKS 3
+// Define the number of pages you want to write to here (limited by flash size)
+#define NUMBER_OF_PAGES NUMBER_OF_BLOCKS * 64
 
 void Serial_ReceivePAD()
 {
@@ -42,9 +55,9 @@ void Serial_ReceivePAD()
 
     case 6:
         Temp_PAD_Analog2 |= Serial.read();
-        PAD_Analog1 = Temp_PAD_Analog1;
-        PAD_Analog2 = Temp_PAD_Analog2;
-        PAD_DigitalSwitches = Temp_PAD_DigitalSwitches;
+        sio::controller::Analog1 = Temp_PAD_Analog1;
+        sio::controller::Analog2 = Temp_PAD_Analog2;
+        sio::controller::DigitalSwitches = Temp_PAD_DigitalSwitches;
         Serial_Reset();
         break;
     }
@@ -66,7 +79,6 @@ bool Serial_Busy()
 
 void Serial_GoIdle()
 {
-
 }
 
 void Serial_Reset()
@@ -105,9 +117,9 @@ void Serial_ReadFrame(unsigned int Address)
         Serial.write(Serial_Out);
     }
 
-    Serial.write(Serial_Checksum);      //Checksum (MSB xor LSB xor Data)
-    Serial.write(MC_Responses::GoodRW); //Memory Card status byte*/
-    MC_FLAG = MC_Flags::Directory_Unread;
+    Serial.write(Serial_Checksum);                  //Checksum (MSB xor LSB xor Data)
+    Serial.write(sio::memory_card::Responses::kGoodReadWrite); //Memory Card status byte*/
+    sio::memory_card::FLAG = sio::memory_card::Flags::kDirectoryUnread;
     Serial_Reset();
 }
 
@@ -137,21 +149,21 @@ void Serial_WriteFrame(unsigned int Address)
 
     if (MC_Sector < 0 || MC_Sector > 1024)
     {
-        Serial.write(MC_Responses::BadSector);
+        Serial.write(sio::memory_card::Responses::kBadSector);
     }
     else if (Serial_Checksum == MC_Checksum_In)
     {
         if (MC_Sector + 1 <= NUMBER_OF_PAGES)
         {
             optiboot_writePage(FlashData, MC_DataBuffer, MC_Sector + 1);
-            MC_FLAG = MC_Flags::Directory_Unread;
+            sio::memory_card::FLAG = sio::memory_card::Flags::kDirectoryUnread;
         }
-        Serial.write(MC_Responses::GoodRW); //Memory Card status byte
-                                            //Write 128 byte data to the frame
+        Serial.write(sio::memory_card::Responses::kGoodReadWrite); //Memory Card status byte
+                                                        //Write 128 byte data to the frame
     }
     else
     {
-        Serial.write(MC_Responses::BadChecksum);
+        Serial.write(sio::memory_card::Responses::kBadChecksum);
     }
 
     Serial_Reset();
@@ -216,9 +228,9 @@ void Serial_ProcessEvents()
                     break;
 
                 case Serial_Commands::SER_PAD_On:
-                    if (!bPadEnabled)
+                    if (!sio::bPadEnabled)
                     {
-                        bPadEnabled = true;
+                        sio::bPadEnabled = true;
                     }
                     Serial.write(OKAY);
                     cmdRouted = true;
@@ -226,9 +238,9 @@ void Serial_ProcessEvents()
                     break;
 
                 case Serial_Commands::SER_PAD_Off:
-                    if (bPadEnabled)
+                    if (sio::bPadEnabled)
                     {
-                        bPadEnabled = false;
+                        sio::bPadEnabled = false;
                     }
                     Serial.write(OKAY);
                     cmdRouted = true;
@@ -236,10 +248,10 @@ void Serial_ProcessEvents()
                     break;
 
                 case Serial_Commands::SER_MC_On:
-                    if (!bMemCardEnabled)
+                    if (!sio::bMemCardEnabled)
                     {
-                        MC_FLAG = MC_Flags::Directory_Unread;
-                        bMemCardEnabled = true;
+                        sio::memory_card::FLAG = sio::memory_card::Flags::kDirectoryUnread;
+                        sio::bMemCardEnabled = true;
                     }
                     Serial.write(OKAY);
                     cmdRouted = true;
@@ -247,10 +259,10 @@ void Serial_ProcessEvents()
                     break;
 
                 case Serial_Commands::SER_MC_Off:
-                    if (bMemCardEnabled)
+                    if (sio::bMemCardEnabled)
                     {
-                        bMemCardEnabled = false;
-                        MC_GoIdle();
+                        sio::bMemCardEnabled = false;
+                        sio::memory_card::GoIdle();
                     }
                     Serial.write(OKAY);
                     cmdRouted = true;
@@ -274,11 +286,11 @@ void Serial_ProcessEvents()
             Serial_IdleTicks++;
     }
 
-    if(Serial_ActiveTicks < SERIALMAXACTIVETICKS)
+    if (Serial_ActiveTicks < SERIALMAXACTIVETICKS)
     {
         Serial_ActiveTicks++;
     }
-    else if(!Serial_Busy() && RTS_Status == true)
+    else if (!Serial_Busy() && RTS_Status == true)
     {
         RTS_Status = false;
         digitalWriteFast(RTS_Pin, HIGH);

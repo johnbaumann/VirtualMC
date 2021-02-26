@@ -1,10 +1,7 @@
-#ifndef PCCOMMS_H
-#define PCCOMMS_H
+#ifndef AVR_SERIAL_H
+#define AVR_SERIAL_H
 
-#include <Arduino.h>
-#include "memcard.h"
-#include "optiboot.h"
-#include "sio.h"
+#include <stdint.h>
 
 //Memcarduinoplus
 //Device Firmware identifier
@@ -15,10 +12,10 @@
 #define ERROR 0xE0 //Invalid command received (error)
 #define OKAY 0x0E  //General command acknowledge
 
-#define SERIALTIMEOUTTICKS 0x25C6 //Aiming for about 120ms delay
+#define SERIALTIMEOUTTICKS 0x25C6   //Aiming for about 120ms delay
 #define SERIALMAXACTIVETICKS 0x0218 //Aiming for about 6440us active
 
-enum Serial_Commands : byte
+enum Serial_Commands : uint8_t
 {
     SER_None = 0x00,
     SER_Get_ID_ = 0xA0,
@@ -39,14 +36,12 @@ extern bool RTS_Status;
 static const uint8_t RTS_Pin = 2;
 static const uint8_t CTS_Pin = 3;
 
-
-
 bool Serial_Busy();
 void Serial_GoIdle();
 void Serial_Init();
 void Serial_ProcessEvents();
-void Serial_ReadFrame(unsigned int);  //Serial
+void Serial_ReadFrame(unsigned int); //Serial
 void Serial_Reset();
 void Serial_WriteFrame(unsigned int); //Serial
 
-#endif
+#endif //AVR_SERIAL_H
