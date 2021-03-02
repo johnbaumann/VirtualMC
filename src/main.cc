@@ -39,12 +39,11 @@
 
 namespace VirtualMC
 {
-
   void Initialize(void)
   {
     sio::SIO_Init();
-    Serial_Init();
-    VirtualMC::avr::spi::Initialize();
+    avr::Serial_Init();
+    avr::spi::Initialize();
   }
 
   void main()
@@ -75,7 +74,7 @@ namespace VirtualMC
         SlaveSelected = true;
       }
 
-      if (!SlaveSelected || Serial_Busy())
+      if (!SlaveSelected || avr::Serial_Busy())
       {
         // Status not idle, reset SIO/SPI state
         if (sio::CurrentSIOCommand != sio::PS1_SIOCommands::Idle)
@@ -89,8 +88,8 @@ namespace VirtualMC
           sio::net_yaroze::GoIdle();
 
           // Quietly listen on SPI
-          VirtualMC::avr::spi::EnablePassiveMode();
-          VirtualMC::avr::spi::Enable();
+          avr::spi::EnablePassiveMode();
+          avr::spi::Enable();
           // Prepare the SPI Register with some fill data
           SPDR = 0xFF;
 
@@ -98,17 +97,17 @@ namespace VirtualMC
           interrupts();
           Serial.begin(38400);
         }
-        if (RTS_Status == false && sio::SIO_IdleTicks >= SIOMAXIDLETICKS && Serial_ActiveTicks < SERIALMAXACTIVETICKS)
+        if (avr::RTS_Status == false && sio::SIO_IdleTicks >= SIOMAXIDLETICKS && avr::Serial_ActiveTicks < SERIALMAXACTIVETICKS)
         {
-          RTS_Status = true;
-          digitalWriteFast(RTS_Pin, LOW);
+          avr::RTS_Status = true;
+          digitalWriteFast(avr::RTS_Pin, LOW);
         }
         // Check for serial commands,
         // Update Serial_IdleTicks
-        Serial_ProcessEvents();
+        avr::Serial_ProcessEvents();
       }
       // Slave bus selected
-      else if (SlaveSelected && !Serial_Busy())
+      else if (SlaveSelected && !avr::Serial_Busy())
       {
         sio::SIO_ProcessEvents();
       }

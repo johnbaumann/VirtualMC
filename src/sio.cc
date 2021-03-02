@@ -10,136 +10,139 @@
 #include "sio_net_yaroze.h"
 #include "sio_controller.h"
 
-namespace sio
+namespace VirtualMC
 {
-    byte CurrentSIOCommand = PS1_SIOCommands::Idle;
-
-    uint16_t SIO_IdleTicks = 0;
-
-    bool bMemCardEnabled = true;
-    bool bPadEnabled = true;
-    bool bNYEnabled = true;
-
-    void SIO_Init()
+    namespace sio
     {
-        // Reset Memory Card commands/variables
-        controller::GoIdle();
-        memory_card::GoIdle();
-        net_yaroze::GoIdle();
-    }
+        byte CurrentSIOCommand = PS1_SIOCommands::Idle;
 
-    void SIO_ProcessEvents()
-    {
-        byte DataIn = 0x00;
-        byte DataOut = 0xFF;
-        bool bTempAck = false;
+        uint16_t SIO_IdleTicks = 0;
 
-        // If ignore, do nothing
-        if (CurrentSIOCommand == PS1_SIOCommands::Ignore)
+        bool bMemCardEnabled = true;
+        bool bPadEnabled = true;
+        bool bNYEnabled = true;
+
+        void SIO_Init()
         {
-            return;
+            // Reset Memory Card commands/variables
+            controller::GoIdle();
+            memory_card::GoIdle();
+            net_yaroze::GoIdle();
         }
-        else // Enter SIO Loop
+
+        void SIO_ProcessEvents()
         {
-            // Nothing done yet, prepare for SIO/SPI
-            if (CurrentSIOCommand == PS1_SIOCommands::Idle)
+            byte DataIn = 0x00;
+            byte DataOut = 0xFF;
+            bool bTempAck = false;
+
+            // If ignore, do nothing
+            if (CurrentSIOCommand == PS1_SIOCommands::Ignore)
             {
-                // Terminate Serial comms
-                if (RTS_Status == true)
-                {
-                    RTS_Status = false;
-                    digitalWriteFast(RTS_Pin, HIGH);
-                }
-                Serial_ActiveTicks = 0;
-                Serial.end();
-                Serial_GoIdle();
-                // Re-enable SPI output
-                VirtualMC::avr::spi::EnableActiveMode();
-                // Turn off interrupts for SIO timing
-                noInterrupts();
-                // Wait for SPI transmission
-                CurrentSIOCommand = PS1_SIOCommands::Wait;
+                return;
             }
-
-            // Check SPI status register
-            if (VirtualMC::avr::spi::IsDataReady())
+            else // Enter SIO Loop
             {
-                SIO_IdleTicks = 0;
-                // Store incoming data to variable
-                DataIn = SPDR;
-
-                // Waiting for command, store incoming byte as command
-                if (CurrentSIOCommand == PS1_SIOCommands::Wait)
-                    CurrentSIOCommand = DataIn;
-
-                // Interpret incoming command
-                switch (CurrentSIOCommand)
+                // Nothing done yet, prepare for SIO/SPI
+                if (CurrentSIOCommand == PS1_SIOCommands::Idle)
                 {
-
-                // Console requests memory card, continue interpreting command
-                case PS1_SIOCommands::MC_Access:
-                    if (bMemCardEnabled)
+                    // Terminate Serial comms
+                    if (avr::RTS_Status == true)
                     {
-                        // Byte exchange is offset by one
-                        // This offsets the ACK signal accordingly
-                        bTempAck = memory_card::SendAck;
-                        DataOut = memory_card::ProcessEvents(DataIn);
+                        avr::RTS_Status = false;
+                        digitalWriteFast(avr::RTS_Pin, HIGH);
                     }
-                    else
-                    {
-                        CurrentSIOCommand = PS1_SIOCommands::Ignore;
-                        VirtualMC::avr::spi::Disable();
-                        bTempAck = false;
-                    }
-
-                    break;
-
-                // Ignore pad, cascade to default ignore behavior
-                case PS1_SIOCommands::PAD_Access:
-                    if (bPadEnabled)
-                    {
-                        bTempAck = controller::SendAck;
-                        DataOut = controller::ProcessEvents(DataIn);
-                    }
-                    else
-                    {
-                        CurrentSIOCommand = PS1_SIOCommands::Ignore;
-                        VirtualMC::avr::spi::Disable();
-                        bTempAck = false;
-                    }
-                    break;
-
-                case PS1_SIOCommands::NY_Access:
-                    if (bNYEnabled)
-                    {
-                        bTempAck = net_yaroze::SendAck;
-                        DataOut = net_yaroze::ProcessEvents(DataIn);
-                    }
-                    else
-                    {
-                        CurrentSIOCommand = PS1_SIOCommands::Ignore;
-                        VirtualMC::avr::spi::Disable();
-                        bTempAck = false;
-                    }
-                    break;
-
-                default: // Bad/Unexpected/Unsupported slave select command
-                    CurrentSIOCommand = PS1_SIOCommands::Ignore;
-                    VirtualMC::avr::spi::Disable();
-                    bTempAck = false;
+                    avr::Serial_ActiveTicks = 0;
+                    Serial.end();
+                    avr::Serial_GoIdle();
+                    // Re-enable SPI output
+                    VirtualMC::avr::spi::EnableActiveMode();
+                    // Turn off interrupts for SIO timing
+                    noInterrupts();
+                    // Wait for SPI transmission
+                    CurrentSIOCommand = PS1_SIOCommands::Wait;
                 }
-                // Push outbound data to the SPI Data Register
-                // Data will be transferred in the next byte pair
-                SPDR = DataOut;
 
-                // Only send ACK if slave still selected
-                if (bTempAck && digitalReadFast(SS) == LOW)
-                    VirtualMC::avr::spi::SendACKInterrupt();
+                // Check SPI status register
+                if (VirtualMC::avr::spi::IsDataReady())
+                {
+                    SIO_IdleTicks = 0;
+                    // Store incoming data to variable
+                    DataIn = SPDR;
 
-                // If data is ready for card, store it.
-                // This takes a bit so this is done after SPDR + ACK
-                memory_card::Commit();
+                    // Waiting for command, store incoming byte as command
+                    if (CurrentSIOCommand == PS1_SIOCommands::Wait)
+                        CurrentSIOCommand = DataIn;
+
+                    // Interpret incoming command
+                    switch (CurrentSIOCommand)
+                    {
+
+                    // Console requests memory card, continue interpreting command
+                    case PS1_SIOCommands::MC_Access:
+                        if (bMemCardEnabled)
+                        {
+                            // Byte exchange is offset by one
+                            // This offsets the ACK signal accordingly
+                            bTempAck = memory_card::SendAck;
+                            DataOut = memory_card::ProcessEvents(DataIn);
+                        }
+                        else
+                        {
+                            CurrentSIOCommand = PS1_SIOCommands::Ignore;
+                            VirtualMC::avr::spi::Disable();
+                            bTempAck = false;
+                        }
+
+                        break;
+
+                    // Ignore pad, cascade to default ignore behavior
+                    case PS1_SIOCommands::PAD_Access:
+                        if (bPadEnabled)
+                        {
+                            bTempAck = controller::SendAck;
+                            DataOut = controller::ProcessEvents(DataIn);
+                        }
+                        else
+                        {
+                            CurrentSIOCommand = PS1_SIOCommands::Ignore;
+                            VirtualMC::avr::spi::Disable();
+                            bTempAck = false;
+                        }
+                        break;
+
+                    case PS1_SIOCommands::NY_Access:
+                        if (bNYEnabled)
+                        {
+                            bTempAck = net_yaroze::SendAck;
+                            DataOut = net_yaroze::ProcessEvents(DataIn);
+                        }
+                        else
+                        {
+                            CurrentSIOCommand = PS1_SIOCommands::Ignore;
+                            VirtualMC::avr::spi::Disable();
+                            bTempAck = false;
+                        }
+                        break;
+
+                    default: // Bad/Unexpected/Unsupported slave select command
+                        CurrentSIOCommand = PS1_SIOCommands::Ignore;
+                        VirtualMC::avr::spi::Disable();
+                        bTempAck = false;
+                    }
+                    // Push outbound data to the SPI Data Register
+                    // Data will be transferred in the next byte pair
+                    SPDR = DataOut;
+
+                    // Only send ACK if slave still selected
+                    if (bTempAck && digitalReadFast(SS) == LOW)
+                        VirtualMC::avr::spi::SendACKInterrupt();
+
+                    // If data is ready for card, store it.
+                    // This takes a bit so this is done after SPDR + ACK
+                    memory_card::Commit();
+                }
             }
         }
-    }
-} // namespace sio
+    } // namespace sio
+} // namespace VirtualMC
