@@ -14,6 +14,24 @@ namespace VirtualMC
         {
             bool SendAck = true;
 
+            void Disable()
+            {
+                if(bNYEnabled)
+                {
+                    bNYEnabled = false;
+                    GoIdle();
+                }
+            }
+
+            void Enable()
+            {
+                if(!bNYEnabled)
+                {
+                    bNYEnabled = true;
+                    GoIdle();
+                }
+            }
+
             void GoIdle()
             {
                 Cur_Cmnd = Commands::kNone;

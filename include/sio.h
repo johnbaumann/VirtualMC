@@ -25,6 +25,7 @@ namespace VirtualMC
 
         extern bool bMemCardEnabled;
         extern bool bPadEnabled;
+        extern bool bNYEnabled;
 
         void SIO_Init();
         void SIO_ProcessEvents();

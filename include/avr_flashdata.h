@@ -1,8 +1,11 @@
+/*
 #ifndef TESTDATA_H
 #define TESTDATA_H
 
 #include <Arduino.h>
 #include <stdint.h>
+
+#include "avr_optiboot.h"
 
 // On the 328p, pages are 128 bytes, which matches the frame size of a memory card.
 // Mega 2560 pages are 256 bytes, needs changes
@@ -10,6 +13,8 @@
 // Define the number of pages you want to write to here (limited by flash size)
 #define NUMBER_OF_PAGES NUMBER_OF_BLOCKS * 64
 
-extern const uint8_t FlashData[SPM_PAGESIZE * NUMBER_OF_PAGES];
+//extern const uint8_t FlashData[SPM_PAGESIZE * NUMBER_OF_PAGES];
+extern const uint8_t FlashData[128 * NUMBER_OF_PAGES] PROGMEM;
 
 #endif
+*/

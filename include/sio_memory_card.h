@@ -3,6 +3,8 @@
 
 #include <Arduino.h>
 
+#include "SD.h"
+
 namespace VirtualMC
 {
     namespace sio
@@ -43,15 +45,19 @@ namespace VirtualMC
             };
 
             extern byte FLAG;
+            
+            extern File myFile;
 
             extern uint16_t Sector;
             extern bool SendAck;
 
             void Commit();
+            void Disable();
+            void Enable();
             void GoIdle();
-            byte ProcessEvents(byte);
-            byte TickReadCommand(byte &);
-            byte TickWriteCommand(byte &);
+            uint8_t ProcessEvents(uint8_t);
+            uint8_t TickReadCommand(uint8_t &);
+            uint8_t TickWriteCommand(uint8_t &);
         } // namespace memory_card
     } //namespace sio
 } // namespace VirtualMC

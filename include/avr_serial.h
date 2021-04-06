@@ -12,7 +12,8 @@
 #define ERROR 0xE0 //Invalid command received (error)
 #define OKAY 0x0E  //General command acknowledge
 
-#define SERIALTIMEOUTTICKS 0x25C6   //Aiming for about 120ms delay
+//#define SERIALTIMEOUTTICKS 0x25C6   //Aiming for about 120ms delay
+#define SERIALTIMEOUTTICKS 0x4B8C
 #define SERIALMAXACTIVETICKS 0x0218 //Aiming for about 6440us active
 
 namespace VirtualMC
@@ -35,17 +36,13 @@ namespace VirtualMC
 
         extern uint16_t Serial_ActiveTicks;
         extern uint16_t Serial_IdleTicks;
-        extern bool RTS_Status;
 
-        static const uint8_t RTS_Pin = 2;
-        static const uint8_t CTS_Pin = 3;
 
         bool Serial_Busy();
-        void Serial_GoIdle();
         void Serial_Init();
         void Serial_ProcessEvents();
         void Serial_ReadFrame(unsigned int); //Serial
-        void Serial_Reset();
+        void Serial_GoIdle();
         void Serial_WriteFrame(unsigned int); //Serial
     }                                         // namespace avr
 } // namespace VirtualMC

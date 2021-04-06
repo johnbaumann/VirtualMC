@@ -9,6 +9,8 @@ namespace VirtualMC
     {
         namespace net_yaroze
         {
+            void Disable();
+            void Enable();
             void GoIdle();
             byte ProcessEvents(byte DataIn);
 

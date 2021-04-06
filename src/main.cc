@@ -6,6 +6,7 @@
 #include "avr_optiboot.h"
 #include "avr_serial.h"
 #include "avr_spi.h"
+
 #include "sio.h"
 #include "sio_memory_card.h"
 #include "sio_controller.h"
@@ -44,6 +45,30 @@ namespace VirtualMC
     sio::SIO_Init();
     avr::Serial_Init();
     avr::spi::Initialize();
+
+    sio::memory_card::Enable();
+    sio::controller::Enable();
+    sio::net_yaroze::Enable();
+
+    while (!Serial)
+    {
+      ; // wait for serial port to connect. Needed for native USB port only
+    }
+
+    Serial.print("Initializing SD card...");
+
+    if (!SD.begin(5))
+    {
+      //Serial.println("SD initialization failed!");
+      while (1)
+        ;
+    }
+    Serial.println("SD initialization done.");
+
+    sio::memory_card::myFile = SD.open("tonyhax.mcr");
+    
+    if (sio::memory_card::myFile)
+      sio::memory_card::myFile.peek();
   }
 
   void main()
@@ -53,6 +78,7 @@ namespace VirtualMC
     //
 
     bool SlaveSelected = false;
+
     while (1)
     {
 
@@ -63,15 +89,16 @@ namespace VirtualMC
       // Push response to SPDR
 
       // Slave bus not selected
-      if (digitalReadFast(SS) == HIGH)
+      if (digitalReadFast(SS) == LOW)
       {
-        SlaveSelected = false;
-        if (sio::SIO_IdleTicks < SIOMAXIDLETICKS)
-          sio::SIO_IdleTicks++;
+        SlaveSelected = true;
       }
       else
       {
-        SlaveSelected = true;
+        if (SlaveSelected)
+        {
+          SlaveSelected = false;
+        }
       }
 
       if (!SlaveSelected || avr::Serial_Busy())
@@ -92,15 +119,6 @@ namespace VirtualMC
           avr::spi::Enable();
           // Prepare the SPI Register with some fill data
           SPDR = 0xFF;
-
-          // Serial requires interrupts, toggle on and resume serial
-          interrupts();
-          Serial.begin(38400);
-        }
-        if (avr::RTS_Status == false && sio::SIO_IdleTicks >= SIOMAXIDLETICKS && avr::Serial_ActiveTicks < SERIALMAXACTIVETICKS)
-        {
-          avr::RTS_Status = true;
-          digitalWriteFast(avr::RTS_Pin, LOW);
         }
         // Check for serial commands,
         // Update Serial_IdleTicks
@@ -109,7 +127,11 @@ namespace VirtualMC
       // Slave bus selected
       else if (SlaveSelected && !avr::Serial_Busy())
       {
+        // Disable interrupts
+        asm volatile("cli");
         sio::SIO_ProcessEvents();
+        // Restore interrupts
+        asm volatile("sei");
       }
     }
   }

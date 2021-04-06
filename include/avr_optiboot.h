@@ -58,6 +58,17 @@ const do_spm_t do_spm = (do_spm_t)((FLASHEND - 1023 + 2) >> 1);
 const do_spm_t do_spm = (do_spm_t)((FLASHEND - 511 + 2) >> 1);
 #endif
 
+// Use PROGMEM1 to place data in the memory between 64kB and 128kB
+// Use PROGMEM2 to place data in the memory between 128kB and 192kB
+// Use PROGMEM3 to place data in the memory between 192kB and 256kB
+#if FLASHEND >= 0x1FFFF
+  #define PROGMEM1 __attribute__((section(".FAR_MEM1")))
+#endif
+#if FLASHEND == 0x3FFFF
+  #define PROGMEM2 __attribute__((section(".FAR_MEM2")))
+  #define PROGMEM3 __attribute__((section(".FAR_MEM3")))
+#endif
+
 void do_spm_cli(optiboot_addr_t, uint8_t, uint16_t);
 void optiboot_page_erase(optiboot_addr_t);
 void optiboot_page_fill(optiboot_addr_t, uint16_t);

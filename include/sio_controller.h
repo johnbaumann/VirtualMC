@@ -38,6 +38,8 @@ namespace VirtualMC
             extern uint16_t Analog1;
             extern uint16_t Analog2;
 
+            void Enable();
+            void Disable();
             void GoIdle();
             byte ProcessEvents(byte);
             byte ReadCmnd_Tick(byte);

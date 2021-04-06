@@ -10,16 +10,6 @@ namespace VirtualMC
     {
         namespace spi
         {
-            void SendACKInterrupt()
-            {
-                // Sometimes the code executes quicker than real hardware
-                // There seems to be enough delay in the code that there's no need for an additional delay
-                //delayMicroseconds(3);
-                digitalWriteFast(kACKInterruptPin, LOW);
-                // Keep ACK low for 4 uS
-                delayMicroseconds(4);
-                digitalWriteFast(kACKInterruptPin, HIGH);
-            }
 
             // Bit of a work around here to prevent drowning out other SIO devices while inactive
             void EnablePassiveMode()
@@ -38,8 +28,8 @@ namespace VirtualMC
                 pinModeFast(kACKInterruptPin, OUTPUT);
             }
 
-            // Toggle SPI off, used for ignoring pad commands on same slave bus
-            void Disable()
+            // Toggle SPI off, used for ignoring commands on same slave bus
+             void Disable()
             {
                 SPCR &= ~_BV(SPE); //Disable SPI
                 EnablePassiveMode();
@@ -53,12 +43,7 @@ namespace VirtualMC
                 SPCR |= _BV(SPE); //Enable SPI
             }
 
-            bool IsDataReady()
-            {
-                // Return whether SPIF bit is set,
-                // indicating the transmission is complete.
-                return (SPSR & (1 << SPIF));
-            }
+
 
             void Initialize()
             {

@@ -3,7 +3,7 @@
 #include <Arduino.h>
 
 #include "avr_digitalWriteFast.h"
-#include "avr_flashdata.h"
+//#include "avr_flashdata.h"
 #include "avr_serial.h"
 #include "avr_spi.h"
 #include "sio_memory_card.h"
@@ -18,9 +18,9 @@ namespace VirtualMC
 
         uint16_t SIO_IdleTicks = 0;
 
-        bool bMemCardEnabled = true;
-        bool bPadEnabled = true;
-        bool bNYEnabled = true;
+        bool bMemCardEnabled = false;
+        bool bPadEnabled = false;
+        bool bNYEnabled = false;
 
         void SIO_Init()
         {
@@ -46,19 +46,11 @@ namespace VirtualMC
                 // Nothing done yet, prepare for SIO/SPI
                 if (CurrentSIOCommand == PS1_SIOCommands::Idle)
                 {
-                    // Terminate Serial comms
-                    if (avr::RTS_Status == true)
-                    {
-                        avr::RTS_Status = false;
-                        digitalWriteFast(avr::RTS_Pin, HIGH);
-                    }
                     avr::Serial_ActiveTicks = 0;
-                    Serial.end();
-                    avr::Serial_GoIdle();
                     // Re-enable SPI output
                     VirtualMC::avr::spi::EnableActiveMode();
                     // Turn off interrupts for SIO timing
-                    noInterrupts();
+                    //noInterrupts();
                     // Wait for SPI transmission
                     CurrentSIOCommand = PS1_SIOCommands::Wait;
                 }
@@ -96,7 +88,6 @@ namespace VirtualMC
 
                         break;
 
-                    // Ignore pad, cascade to default ignore behavior
                     case PS1_SIOCommands::PAD_Access:
                         if (bPadEnabled)
                         {
@@ -134,6 +125,9 @@ namespace VirtualMC
                     // Data will be transferred in the next byte pair
                     SPDR = DataOut;
 
+                    // Actual delay here varies by a few uS, but trying to match real hardware delays
+                    delayMicroseconds(2);
+
                     // Only send ACK if slave still selected
                     if (bTempAck && digitalReadFast(SS) == LOW)
                         VirtualMC::avr::spi::SendACKInterrupt();
@@ -141,6 +135,17 @@ namespace VirtualMC
                     // If data is ready for card, store it.
                     // This takes a bit so this is done after SPDR + ACK
                     memory_card::Commit();
+                }
+                else
+                {
+                    if (sio::SIO_IdleTicks < SIOMAXIDLETICKS)
+                    {
+                        sio::SIO_IdleTicks++;
+                    }
+                    else
+                    {
+                        // SPI status held low too long, possibly disconnected?
+                    }
                 }
             }
         }

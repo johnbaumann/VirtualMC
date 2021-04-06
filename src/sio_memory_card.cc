@@ -1,9 +1,11 @@
 #include "sio_memory_card.h"
 
 #include <Arduino.h>
+#include <stdint.h>
 
-#include "avr_flashdata.h"
-#include "avr_optiboot.h"
+//#include "avr_flashdata.h"
+//#include "avr_optiboot.h"
+#include "SD.h"
 #include "sio.h"
 
 namespace VirtualMC
@@ -15,23 +17,32 @@ namespace VirtualMC
 
       byte FLAG = Flags::kDirectoryUnread;
 
-      byte Cur_Cmnd;
-      uint8_t Cmnd_Ticks;
-      uint16_t Sector;
-      uint8_t Sector_Offset;
-      byte Checksum_In;
-      byte Checksum_Out;
+      uint8_t Cur_Cmnd = Commands::kNone;
+      uint8_t Cmnd_Ticks = 0;
+      uint16_t Sector = 0;
+      uint8_t Sector_Offset = 0;
+      uint8_t Checksum_In = 0;
+      uint8_t Checksum_Out = 0;
       bool SendAck = true;
       bool UncommitedWrite = false;
 
-      uint8_t DataBuffer[SPM_PAGESIZE]; //128 on 328P
+      uint8_t DataBuffer[SPM_PAGESIZE];
+
+      File myFile;
 
       void Commit()
       {
         if (UncommitedWrite)
         {
+          if (SPM_PAGESIZE > 128)
+          {
+            for (uint16_t i = 0; i + 128 < SPM_PAGESIZE; i++)
+            {
+              //DataBuffer[i] = pgm_read_byte_near((FlashData + ((Sector) * 128) + i + 128));
+            }
+          }
           // Write buffer to memory page
-          optiboot_writePage(FlashData, DataBuffer, Sector + 1);
+          //optiboot_writePage(FlashData, DataBuffer, Sector + 1);
 
           // Directory structure was updated, reset directory status
           if (Sector == 0x0000)
@@ -44,6 +55,25 @@ namespace VirtualMC
         return;
       }
 
+      void Enable()
+      {
+        if (!bMemCardEnabled)
+        {
+          bMemCardEnabled = true;
+          FLAG = Flags::kDirectoryUnread;
+          GoIdle();
+        }
+      }
+
+      void Disable()
+      {
+        if (bMemCardEnabled)
+        {
+          bMemCardEnabled = false;
+          GoIdle();
+        }
+      }
+
       void GoIdle()
       {
         Cur_Cmnd = Commands::kNone;
@@ -52,9 +82,9 @@ namespace VirtualMC
         Sector_Offset = 0;
       }
 
-      byte ProcessEvents(byte DataIn)
+      uint8_t ProcessEvents(uint8_t DataIn)
       {
-        byte DataOut;
+        uint8_t DataOut;
         bool cmdRouted = false;
 
         //Loop until command is properly routed
@@ -112,9 +142,9 @@ namespace VirtualMC
         return DataOut;
       }
 
-      byte TickReadCommand(byte &DataIn)
+      uint8_t TickReadCommand(uint8_t &DataIn)
       {
-        byte DataOut;
+        uint8_t DataOut;
 
         SendAck = true; // Default true;
 
@@ -165,6 +195,10 @@ namespace VirtualMC
           //Confirm LSB
           DataOut = (Sector & 0xFF);
           Checksum_Out = highByte(Sector) ^ lowByte(Sector);
+          if (myFile.position() != ((uint32_t)Sector * 128u))
+            myFile.seek((uint32_t)Sector * 128u);
+          else
+            myFile.peek();
           break;
 
           // Cases 8 through 135 overloaded to default operator below
@@ -181,7 +215,8 @@ namespace VirtualMC
         default:
           if (Cmnd_Ticks >= 8 && Cmnd_Ticks <= 135) //Stay here for 128 bytes
           {
-            DataOut = pgm_read_byte_near((FlashData + (Sector * (uint16_t)128) + Sector_Offset));
+            //DataOut = pgm_read_byte_near((FlashData + (Sector * (uint16_t)128) + Sector_Offset));
+            myFile.read(&DataOut, 1);
             Checksum_Out ^= DataOut;
             Sector_Offset++;
           }
@@ -198,9 +233,9 @@ namespace VirtualMC
         return DataOut;
       }
 
-      byte TickWriteCommand(byte &DataIn)
+      uint8_t TickWriteCommand(uint8_t &DataIn)
       {
-        byte DataOut;
+        uint8_t DataOut;
 
         SendAck = true; // Default true;
 
@@ -269,17 +304,15 @@ namespace VirtualMC
             {
               FLAG = Flags::kDirectoryRead;
               DataOut = Responses::kGoodReadWrite;
-              // If the incoming sector is within our storage, store it
-              if (Sector + 1 <= NUMBER_OF_PAGES)
-              {
-                UncommitedWrite = true;
-              }
+              UncommitedWrite = true;
             }
             else
             {
               DataOut = Responses::kBadChecksum;
             }
-
+            // Pre-advance file offset
+            myFile.seek((uint32_t)(Sector+1) * 128u);
+            
             GoIdle();
           }
           else

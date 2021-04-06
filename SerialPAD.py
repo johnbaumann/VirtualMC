@@ -47,11 +47,11 @@ ser = serial.Serial(
     stopbits=serial.STOPBITS_ONE,
     timeout=3,
     xonxoff=False,
-    rtscts=True,
+    rtscts=False,
     dsrdtr=False
 )
 
-ser.port = 'COM12'
+ser.port = 'COM8'
 ser.rts = False
 
 waiting_for_last_event = False

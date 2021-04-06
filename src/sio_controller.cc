@@ -2,6 +2,8 @@
 
 #include <Arduino.h>
 
+#include "sio.h"
+
 namespace VirtualMC
 {
     namespace sio
@@ -18,6 +20,24 @@ namespace VirtualMC
             //uint8_t Controller_TAP = 0x00;  // Multi-player tap select, un-implemented
 
             bool SendAck = true;
+
+            void Disable()
+            {
+                if(bPadEnabled)
+                {
+                    bPadEnabled = false;
+                    GoIdle();
+                }
+            }
+
+            void Enable()
+            {
+                if(!bPadEnabled)
+                {
+                    bPadEnabled = true;
+                    GoIdle();
+                }
+            }
 
             void GoIdle()
             {
