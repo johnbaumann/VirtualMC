@@ -2,8 +2,6 @@
 
 #include <Arduino.h>
 
-#include "avr_digitalWriteFast.h"
-//#include "avr_flashdata.h"
 #include "avr_serial.h"
 #include "avr_spi.h"
 #include "sio_memory_card.h"
@@ -129,7 +127,7 @@ namespace VirtualMC
                     delayMicroseconds(2);
 
                     // Only send ACK if slave still selected
-                    if (bTempAck && digitalReadFast(SS) == LOW)
+                    if (bTempAck && digitalRead(SS) == LOW)
                         VirtualMC::avr::spi::SendACKInterrupt();
 
                     // If data is ready for card, store it.

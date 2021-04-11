@@ -1,11 +1,11 @@
 #include "sio_memory_card.h"
 
 #include <Arduino.h>
+#include <SD.h>
 #include <stdint.h>
 
 //#include "avr_flashdata.h"
 //#include "avr_optiboot.h"
-#include "SD.h"
 #include "sio.h"
 
 namespace VirtualMC
@@ -26,21 +26,15 @@ namespace VirtualMC
       bool SendAck = true;
       bool UncommitedWrite = false;
 
-      uint8_t DataBuffer[SPM_PAGESIZE];
+      uint8_t DataBuffer[128];
 
-      File myFile;
+      uint8_t memory_card_1[SECTOR_SIZE * BLOCK_SIZE * NUM_OF_BLOCKS] = {};
 
       void Commit()
       {
         if (UncommitedWrite)
         {
-          if (SPM_PAGESIZE > 128)
-          {
-            for (uint16_t i = 0; i + 128 < SPM_PAGESIZE; i++)
-            {
-              //DataBuffer[i] = pgm_read_byte_near((FlashData + ((Sector) * 128) + i + 128));
-            }
-          }
+
           // Write buffer to memory page
           //optiboot_writePage(FlashData, DataBuffer, Sector + 1);
 
@@ -195,10 +189,6 @@ namespace VirtualMC
           //Confirm LSB
           DataOut = (Sector & 0xFF);
           Checksum_Out = highByte(Sector) ^ lowByte(Sector);
-          if (myFile.position() != ((uint32_t)Sector * 128u))
-            myFile.seek((uint32_t)Sector * 128u);
-          else
-            myFile.peek();
           break;
 
           // Cases 8 through 135 overloaded to default operator below
@@ -216,7 +206,7 @@ namespace VirtualMC
           if (Cmnd_Ticks >= 8 && Cmnd_Ticks <= 135) //Stay here for 128 bytes
           {
             //DataOut = pgm_read_byte_near((FlashData + (Sector * (uint16_t)128) + Sector_Offset));
-            myFile.read(&DataOut, 1);
+            DataOut = memory_card_1[(Sector * 128u) + Sector_Offset];
             Checksum_Out ^= DataOut;
             Sector_Offset++;
           }
@@ -235,7 +225,7 @@ namespace VirtualMC
 
       uint8_t TickWriteCommand(uint8_t &DataIn)
       {
-        uint8_t DataOut;
+        uint8_t DataOut = 0x00;
 
         SendAck = true; // Default true;
 
@@ -310,9 +300,7 @@ namespace VirtualMC
             {
               DataOut = Responses::kBadChecksum;
             }
-            // Pre-advance file offset
-            myFile.seek((uint32_t)(Sector+1) * 128u);
-            
+
             GoIdle();
           }
           else

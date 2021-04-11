@@ -4,7 +4,6 @@
 #include <Arduino.h>
 #include <stdint.h>
 
-#include "avr_digitalWriteFast.h"
 
 namespace VirtualMC
 {
@@ -23,7 +22,7 @@ namespace VirtualMC
 
             inline void SendACKInterrupt() __attribute__((always_inline));
 
-            static const uint8_t kACKInterruptPin = 9;
+            static const uint8_t kACKInterruptPin = 6;
 
             bool IsDataReady()
             {
@@ -34,10 +33,10 @@ namespace VirtualMC
 
             void SendACKInterrupt()
             {
-                digitalWriteFast(kACKInterruptPin, LOW);
+                digitalWrite(kACKInterruptPin, LOW);
                 // Keep ACK low for 4 uS
                 delayMicroseconds(4);
-                digitalWriteFast(kACKInterruptPin, HIGH);
+                digitalWrite(kACKInterruptPin, HIGH);
             }
         }
     }

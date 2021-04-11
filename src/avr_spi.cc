@@ -2,7 +2,9 @@
 
 #include <Arduino.h>
 
-#include "avr_digitalWriteFast.h"
+#include <avr_emulation.h>
+#include <SPI.h>
+
 
 namespace VirtualMC
 {
@@ -14,18 +16,18 @@ namespace VirtualMC
             // Bit of a work around here to prevent drowning out other SIO devices while inactive
             void EnablePassiveMode()
             {
-                digitalWriteFast(MISO, HIGH);
-                pinModeFast(MISO, INPUT);
-                digitalWriteFast(kACKInterruptPin, HIGH);
-                pinModeFast(kACKInterruptPin, INPUT);
+                digitalWrite(MISO, HIGH);
+                pinMode(MISO, INPUT);
+                digitalWrite(kACKInterruptPin, HIGH);
+                pinMode(kACKInterruptPin, INPUT);
             }
 
             // Reactivate regular SPI communication
             void EnableActiveMode()
             {
-                digitalWriteFast(MISO, HIGH);
-                pinModeFast(MISO, OUTPUT);
-                pinModeFast(kACKInterruptPin, OUTPUT);
+                digitalWrite(MISO, HIGH);
+                pinMode(MISO, OUTPUT);
+                pinMode(kACKInterruptPin, OUTPUT);
             }
 
             // Toggle SPI off, used for ignoring commands on same slave bus
@@ -33,7 +35,6 @@ namespace VirtualMC
             {
                 SPCR &= ~_BV(SPE); //Disable SPI
                 EnablePassiveMode();
-
                 return;
             }
 
@@ -50,15 +51,28 @@ namespace VirtualMC
                 byte clr = 0;
 
                 // Set everything as input, try not to interrupt SIO
-                pinModeFast(SCK, INPUT);
-                pinModeFast(SS, INPUT);
-                pinModeFast(MOSI, INPUT);
-                pinModeFast(MISO, INPUT);
-                pinModeFast(kACKInterruptPin, INPUT);
+                pinMode(SCK, INPUT);
+                pinMode(SS, INPUT_PULLUP);
+                pinMode(MOSI, INPUT);
+                pinMode(MISO, INPUT);
+                pinMode(kACKInterruptPin, INPUT);
 
                 // Set bits in the SPCR register
                 //SPCR |= _BV(SPR0) | _BV(SPR1) | _BV(CPHA) | _BV(CPOL) & ~_BV(MSTR) | _BV(DORD) | _BV(SPE) & ~_BV(SPIE); // = 0x6F
-                SPCR = 0x6F;
+                //SPCR = 0x6F;
+
+                SPCR.setMISO(MISO);
+                SPCR.setMOSI(MOSI);
+                SPCR.setSCK(SCK);
+                SPCR.enable_pins();
+                SPCR &= ~_BV(MSTR);
+                SPCR &= ~_BV(SPIE);
+                SPCR |= _BV(CPHA);
+                SPCR |= _BV(CPOL);
+                SPCR |= _BV(DORD);
+                SPCR |= _BV(SPR0);
+                SPCR |= _BV(SPR1);
+                SPCR |= _BV(SPE);
 
                 //Clear SPSR and SPDR by reading their values
                 clr = SPDR;

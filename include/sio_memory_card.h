@@ -3,7 +3,11 @@
 
 #include <Arduino.h>
 
-#include "SD.h"
+//#include <SD.h>
+
+#define SECTOR_SIZE 128  //Bytes
+#define BLOCK_SIZE 64    //Sectors
+#define NUM_OF_BLOCKS 16 //16 Blocks = 1 Directory + 15 save blocks
 
 namespace VirtualMC
 {
@@ -46,7 +50,7 @@ namespace VirtualMC
 
             extern byte FLAG;
             
-            extern File myFile;
+            extern uint8_t memory_card_1[SECTOR_SIZE * BLOCK_SIZE * NUM_OF_BLOCKS];
 
             extern uint16_t Sector;
             extern bool SendAck;
