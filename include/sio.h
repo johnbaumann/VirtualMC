@@ -21,10 +21,8 @@ namespace VirtualMC
         };
 
         extern byte CurrentSIOCommand;
-        extern uint16_t SIO_IdleTicks;
 
         extern bool bMemCardEnabled;
-        extern bool bPadEnabled;
 
         void SIO_Init();
         void SIO_ProcessEvents();

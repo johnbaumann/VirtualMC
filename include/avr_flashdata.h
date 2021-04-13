@@ -10,6 +10,6 @@
 // Define the number of pages you want to write to here (limited by flash size)
 #define NUMBER_OF_PAGES NUMBER_OF_BLOCKS * 64
 
-extern const uint8_t FlashData[SPM_PAGESIZE * NUMBER_OF_PAGES];
+extern const uint8_t FlashData[];
 
 #endif

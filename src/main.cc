@@ -3,14 +3,9 @@
 #include <avr/pgmspace.h> // Allows reading memory from program storage space.
 
 #include "avr_digitalWriteFast.h" //https://code.google.com/archive/p/digitalwritefast/
-#include "avr_optiboot.h"
-#include "avr_serial.h"
 #include "avr_spi.h"
 #include "sio.h"
 #include "sio_memory_card.h"
-#include "sio_controller.h"
-#include "sio_net_yaroze.h"
-#include "sio_tty.h"
 
 //Written for the 328p running 3.3V @ 8MHz
 /*
@@ -33,16 +28,15 @@
   TXD -> RXD
   RXD -> TXD
   GND -> GND
-  CTS ->2
-  RTS ->3 //Not monitored by arduino atm, keeping here for future compatibility.
 */
 
 namespace VirtualMC
 {
   void Initialize(void)
   {
+    Serial.end();
+    cli(); // Disable interrupts for whole project, don't need them.
     sio::SIO_Init();
-    avr::Serial_Init();
     avr::spi::Initialize();
   }
 
@@ -51,8 +45,6 @@ namespace VirtualMC
     // TODO(portability):
     // Remove AVR specific code from sio namespace
     //
-
-    bool SlaveSelected = false;
     while (1)
     {
 
@@ -63,20 +55,15 @@ namespace VirtualMC
       // Push response to SPDR
 
       // Slave bus not selected
-      if (digitalReadFast(SS) == HIGH)
+      if (digitalReadFast(SS) == LOW)
       {
-        SlaveSelected = false;
-        if (sio::SIO_IdleTicks < SIOMAXIDLETICKS)
-          sio::SIO_IdleTicks++;
+        // Disable Interrupts
+        /*if(sio::CurrentSIOCommand == sio::PS1_SIOCommands::Idle)
+          cli();*/
+        sio::SIO_ProcessEvents();
       }
       else
       {
-        SlaveSelected = true;
-      }
-
-      if (!SlaveSelected || avr::Serial_Busy())
-      {
-        // Status not idle, reset SIO/SPI state
         if (sio::CurrentSIOCommand != sio::PS1_SIOCommands::Idle)
         {
           // Clear last command
@@ -84,32 +71,16 @@ namespace VirtualMC
 
           // Reset Memory Card commands/variables
           sio::memory_card::GoIdle();
-          sio::controller::GoIdle();
-          sio::net_yaroze::GoIdle();
 
           // Quietly listen on SPI
           avr::spi::EnablePassiveMode();
           avr::spi::Enable();
           // Prepare the SPI Register with some fill data
-          SPDR = 0xFF;
+          //SPDR = 0xFF;
 
-          // Serial requires interrupts, toggle on and resume serial
-          interrupts();
-          Serial.begin(38400);
+          // Enable Interrupts
+          //sei();
         }
-        if (avr::RTS_Status == false && sio::SIO_IdleTicks >= SIOMAXIDLETICKS && avr::Serial_ActiveTicks < SERIALMAXACTIVETICKS)
-        {
-          avr::RTS_Status = true;
-          digitalWriteFast(avr::RTS_Pin, LOW);
-        }
-        // Check for serial commands,
-        // Update Serial_IdleTicks
-        avr::Serial_ProcessEvents();
-      }
-      // Slave bus selected
-      else if (SlaveSelected && !avr::Serial_Busy())
-      {
-        sio::SIO_ProcessEvents();
       }
     }
   }

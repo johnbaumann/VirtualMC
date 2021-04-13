@@ -24,9 +24,7 @@ namespace VirtualMC
             // Bit of a work around here to prevent drowning out other SIO devices while inactive
             void EnablePassiveMode()
             {
-                digitalWriteFast(MISO, HIGH);
                 pinModeFast(MISO, INPUT);
-                digitalWriteFast(kACKInterruptPin, HIGH);
                 pinModeFast(kACKInterruptPin, INPUT);
             }
 
@@ -43,7 +41,6 @@ namespace VirtualMC
             {
                 SPCR &= ~_BV(SPE); //Disable SPI
                 EnablePassiveMode();
-
                 return;
             }
 

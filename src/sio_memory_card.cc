@@ -3,7 +3,6 @@
 #include <Arduino.h>
 
 #include "avr_flashdata.h"
-#include "avr_optiboot.h"
 #include "sio.h"
 
 namespace VirtualMC
@@ -31,7 +30,7 @@ namespace VirtualMC
         if (UncommitedWrite)
         {
           // Write buffer to memory page
-          optiboot_writePage(FlashData, DataBuffer, Sector + 1);
+          //optiboot_writePage(FlashData, DataBuffer, Sector + 1);
 
           // Directory structure was updated, reset directory status
           if (Sector == 0x0000)
