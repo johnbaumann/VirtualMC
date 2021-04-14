@@ -34,7 +34,6 @@ namespace VirtualMC
 {
   void Initialize(void)
   {
-    Serial.end();
     cli(); // Disable interrupts for whole project, don't need them.
     sio::SIO_Init();
     avr::spi::Initialize();
