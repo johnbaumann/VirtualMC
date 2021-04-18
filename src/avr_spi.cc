@@ -35,6 +35,7 @@ namespace VirtualMC
             {
                 digitalWriteFast(MISO, HIGH);
                 pinModeFast(MISO, OUTPUT);
+                digitalWriteFast(kACKInterruptPin, HIGH);
                 pinModeFast(kACKInterruptPin, OUTPUT);
             }
 
