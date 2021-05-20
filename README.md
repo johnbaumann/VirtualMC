@@ -1,4 +1,8 @@
+#### Quick note:
+Check out the [just_the_card](https://github.com/johnbaumann/VirtualMC/tree/just_the_card) branch for a stripped down version of the project which removes everything but the memory card functionality, hopefully this makes the code easier to digest. The self-write call is commented out, so the stock arduino bootloader can be used.
+
 # VirtualMC
+
   Experimental implementation of an Arduino as a Playstation 1 Memory Card(and now game pad) - This is still a work in progress, updates are mostly stable but may have unexpected results
   
   Game save data is stored in program memory, with space for 3 blocks = Directory + 2 save files -Plans to adapt the code for MEGA2560 to expand storage
