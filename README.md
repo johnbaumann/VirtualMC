@@ -1,4 +1,6 @@
-#### Quick note:
+#### Quick notes:
+This project is no longer in development, I have moved my efforts to the ESP32: https://github.com/johnbaumann/OpenMC
+
 Check out the [just_the_card](https://github.com/johnbaumann/VirtualMC/tree/just_the_card) branch for a stripped down version of the project which removes everything but the memory card functionality, hopefully this makes the code easier to digest. The self-write call is commented out, so the stock arduino bootloader can be used.
 
 # VirtualMC
